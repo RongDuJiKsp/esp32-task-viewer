@@ -46,13 +46,18 @@ impl<'a> DisplayRaw<'a> {
         let dc = PinDriver::output(io.dc)?; // DC
         let rst = PinDriver::output(io.rst)?; // RST
         let di = SPIInterface::new(device, dc);
-        let mut display = St7305::new(di, rst);
-        let mut delay = esp_idf_hal::delay::Ets;
-        display.init(&mut delay).unwrap();
-        display.set_orientation(Orientation::Landscape);
-        display.color_clear(BinaryColor::Off as u8);
+        let display = St7305::new(di, rst);
         log::info!("ST7305 display driver initialized successfully");
         Ok(DisplayRaw { display })
+    }
+    pub fn init(&mut self) -> Result<()> {
+        let mut delay = esp_idf_hal::delay::Ets;
+        self.display
+            .init(&mut delay)
+            .map_err(|e| anyhow::anyhow!("Failed to initialize display: {:#?}", e))?;
+        self.display.set_orientation(Orientation::Landscape);
+        self.display.color_clear(BinaryColor::Off as u8);
+        Ok(())
     }
     pub fn get_display(&self) -> &St7305Display<'a> {
         &self.display

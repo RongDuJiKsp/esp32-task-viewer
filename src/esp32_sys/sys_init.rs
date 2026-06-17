@@ -13,7 +13,8 @@ impl SysInit {
     }
     pub fn init_display(display_pin: DisplayIO<'static>) {
         log::info!("Initializing display...");
-        let display = DisplayRaw::new(display_pin).unwrap();
+        let mut display = DisplayRaw::new(display_pin).unwrap();
+        display.init().unwrap();
         log::info!("Display initialized successfully");
         GLOBAL_DISPLAY.set(Mutex::new(Box::new(display))).unwrap();
         log::info!("Display set in GLOBAL_DISPLAY");
