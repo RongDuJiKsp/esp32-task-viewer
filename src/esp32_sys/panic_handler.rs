@@ -71,7 +71,7 @@ impl<'a> PanicHandlerInner<'a> {
             .map_err(|e| anyhow::anyhow!("Failed to lock global display: {e}"))?;
         let screen = display.get_display_mut();
 
-        let text = format!("{info}");
+        let text = format!("SYSTEM PANIC !!!\n\n{}", info);
         let character_style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
         let textbox_style = TextBoxStyleBuilder::new()
             .alignment(HorizontalAlignment::Left)
@@ -79,15 +79,12 @@ impl<'a> PanicHandlerInner<'a> {
         let margin = 10u32;
         let area = Rectangle::new(
             Point::new(margin as i32, margin as i32),
-            Size::new(ESP32S3_LCP4_2_SCREEN_WIDTH - 2 * margin, ESP32S3_LCP4_2_SCREEN_HEIGHT - 2 * margin),
+            Size::new(
+                ESP32S3_LCP4_2_SCREEN_WIDTH - 2 * margin,
+                ESP32S3_LCP4_2_SCREEN_HEIGHT - 2 * margin,
+            ),
         );
-        TextBox::with_textbox_style(
-            &text,
-            area,
-            character_style,
-            textbox_style,
-        )
-        .draw(screen)?;
+        TextBox::with_textbox_style(&text, area, character_style, textbox_style).draw(screen)?;
 
         screen
             .flush()
