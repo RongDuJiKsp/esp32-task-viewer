@@ -35,7 +35,6 @@ pub struct DisplayRaw<'a> {
 }
 impl<'a> DisplayRaw<'a> {
     pub fn new<'b:'a>(io: DisplayIO<'b>) -> Result<Self> {
-        log::info!("Initializing SPI driver...");
         let spi = SpiDriver::new(
             io.spi,
             io.sclk,
@@ -43,14 +42,10 @@ impl<'a> DisplayRaw<'a> {
             Option::<AnyIOPin>::None, // MISO
             &SpiDriverConfig::new(),
         )?;
-        log::info!("SPI driver initialized successfully");
         let device = SpiDeviceDriver::new(spi, Some(io.cs), &SpiConfig::new())?;
-        log::info!("SPI device driver initialized successfully");
         let dc = PinDriver::output(io.dc)?; // DC
         let rst = PinDriver::output(io.rst)?; // RST
-        log::info!("GPIO pins initialized successfully");
         let di = SPIInterface::new(device, dc);
-        log::info!("SPI interface created successfully");
         let display = St7305::new(di, rst);
         log::info!("ST7305 display driver initialized successfully");
         Ok(DisplayRaw { display })
