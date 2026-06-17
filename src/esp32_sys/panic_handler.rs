@@ -1,11 +1,18 @@
 use anyhow::{Context, Result};
-use core::time::Duration;
+use core::{result::Result::Ok, time::Duration};
+use embedded_graphics::{
+    mono_font::{ascii::FONT_10X20, MonoTextStyle},
+    pixelcolor::BinaryColor,
+    prelude::*,
+    text::Text,
+};
 use esp_idf_hal::{
     gpio::{PinDriver, Pull},
     peripherals::Peripherals,
 };
 use std::{panic::PanicHookInfo, thread::sleep};
 
+use crate::esp32_sys::{display_raw::DisplayRaw, sys_init::GLOBAL_DISPLAY};
 pub struct PanicHandler;
 struct PanicHandlerInner;
 // wrap
@@ -28,7 +35,20 @@ impl PanicHandler {
 impl PanicHandlerInner {
     fn try_handle_panic(info: &PanicHookInfo) -> Result<()> {
         log::error!("Panic occurred: {}", info);
+        PanicHandlerInner::print_panic_info_to_lcd(info)?;
         PanicHandlerInner::wait_boot_press()?;
+        Ok(())
+    }
+    fn print_panic_info_to_lcd(info: &PanicHookInfo) -> Result<()> {
+        let style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
+        Text::new(info.payload_as_str().unwrap_or("Unknown panic"), Point::new(10, 30), style).draw(
+            GLOBAL_DISPLAY
+                .get()
+                .ok_or_else(|| anyhow::anyhow!("Failed to get global display"))?
+                .lock()
+                .map_err(|e| anyhow::anyhow!("Failed to lock global display: {e}"))?
+                .get_display_mut(),
+        )?;
         Ok(())
     }
     fn wait_boot_press() -> Result<()> {
