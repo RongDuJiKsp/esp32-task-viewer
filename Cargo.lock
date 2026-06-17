@@ -1463,6 +1463,7 @@ dependencies = [
 name = "esp32-task-viewer"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "embassy-time",
  "embuild",
  "esp-idf-hal",
