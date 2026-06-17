@@ -1,6 +1,6 @@
 use core::time::Duration;
 use esp_idf_hal::{
-    gpio::{Input, PinDriver, Pull},
+    gpio::{PinDriver, Pull},
     peripherals::Peripherals,
 };
 use std::{panic::PanicHookInfo, thread::sleep};
@@ -14,10 +14,12 @@ impl PanicHandler {
 
     fn wait_boot_press() {
         log::info!("Press the BOOT button to continue...");
-        let peripherals = Peripherals::take().unwrap();
-        let boot = PinDriver::input(peripherals.pins.gpio0, Pull::Up).unwrap();
+        let boot_pin = Peripherals::take()
+            .and_then(|p| PinDriver::input(p.pins.gpio0, Pull::Up))
+            .ok();
         loop {
-            if boot.is_low() {
+            if boot_pin.as_ref().map_or(false, |p| p.is_low()) {
+                log::info!("BOOT button pressed. Restarting...");
                 unsafe {
                     esp_idf_sys::esp_restart();
                 }
