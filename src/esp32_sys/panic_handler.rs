@@ -7,9 +7,11 @@ use esp_idf_hal::{
 use std::{panic::PanicHookInfo, thread::sleep};
 
 pub struct PanicHandler;
+struct PanicHandlerInner;
+// wrap
 impl PanicHandler {
     pub fn handle_panic(info: &PanicHookInfo) {
-        if let Err(err) = PanicHandler::try_handle_panic(info) {
+        if let Err(err) = PanicHandlerInner::try_handle_panic(info) {
             log::error!("Failed to handle panic: {err:#}");
         }
         PanicHandler::wait_forever();
@@ -20,10 +22,13 @@ impl PanicHandler {
             sleep(Duration::from_secs(5));
         }
     }
+}
 
+// actual implementation
+impl PanicHandlerInner {
     fn try_handle_panic(info: &PanicHookInfo) -> Result<()> {
         log::error!("Panic occurred: {}", info);
-        PanicHandler::wait_boot_press()?;
+        PanicHandlerInner::wait_boot_press()?;
         Ok(())
     }
     fn wait_boot_press() -> Result<()> {
