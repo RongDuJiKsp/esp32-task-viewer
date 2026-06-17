@@ -4,12 +4,17 @@ use embedded_graphics::{
     mono_font::{ascii::FONT_10X20, MonoTextStyle},
     pixelcolor::BinaryColor,
     prelude::*,
-    text::Text,
+    primitives::Rectangle,
 };
+use embedded_text::{alignment::HorizontalAlignment, style::TextBoxStyleBuilder, TextBox};
+
 use esp_idf_hal::gpio::PinDriver;
 use std::{panic::PanicHookInfo, thread::sleep};
 
 use crate::esp32_sys::sys_init::GLOBAL_DISPLAY;
+
+const ESP32S3_LCP4_2_SCREEN_WIDTH: u32 = 400;
+const ESP32S3_LCP4_2_SCREEN_HEIGHT: u32 = 300;
 pub struct PanicHandlerIO<'a> {
     boot_btn: PinDriver<'a, esp_idf_hal::gpio::Input>,
 }
@@ -65,14 +70,25 @@ impl<'a> PanicHandlerInner<'a> {
             .lock()
             .map_err(|e| anyhow::anyhow!("Failed to lock global display: {e}"))?;
         let screen = display.get_display_mut();
-        
-        let style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
-        Text::new(
-            info.payload_as_str().unwrap_or("Unknown panic"),
-            Point::new(10, 30),
-            style,
+
+        let text = info.payload_as_str().unwrap_or("Unknown panic");
+        let character_style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
+        let textbox_style = TextBoxStyleBuilder::new()
+            .alignment(HorizontalAlignment::Left)
+            .build();
+        let margin = 10u32;
+        let area = Rectangle::new(
+            Point::new(margin as i32, margin as i32),
+            Size::new(ESP32S3_LCP4_2_SCREEN_WIDTH - 2 * margin, ESP32S3_LCP4_2_SCREEN_HEIGHT - 2 * margin),
+        );
+        TextBox::with_textbox_style(
+            text,
+            area,
+            character_style,
+            textbox_style,
         )
         .draw(screen)?;
+
         screen
             .flush()
             .map_err(|e| anyhow::anyhow!("Failed to flush display: {:#?}", e))?;
