@@ -1,10 +1,11 @@
+mod esp32_sys;
+use esp32_sys::sys_init::SysInit;
 fn main() {
-    // It is necessary to call this function once. Otherwise, some patches to the runtime
-    // implemented by esp-idf-sys might not link properly. See https://github.com/esp-rs/esp-idf-template/issues/71
-    esp_idf_svc::sys::link_patches();
-
-    // Bind the log crate to the ESP Logging facilities
-    esp_idf_svc::log::EspLogger::initialize_default();
-
-    log::info!("Hello, world!");
+    SysInit::init_patches();
+    SysInit::init_logger();
+    log::info!("Booting ESP32 Task Viewer...");
+    loop {
+        log::info!("Hello, world!");
+        std::thread::sleep(std::time::Duration::from_secs(5));
+    }
 }
