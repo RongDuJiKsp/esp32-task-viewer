@@ -1,0 +1,25 @@
+import { Esp32-LCD4_3} from "constants.slint";
+export component App inherits Window {
+    width: Esp32-LCD4_3.screenWidth;
+    height: Esp32-LCD4_3.screenHeight;
+
+    Rectangle {
+        background: #1f2937;
+
+        Text {
+            x: 16px;
+            y: 16px;
+            text: "ESP32-S3 + Slint + Rust";
+            color: white;
+            font-size: 18px;
+        }
+
+        Text {
+            x: 16px;
+            y: 48px;
+            text: "compile-only skeleton";
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+    }
+}
