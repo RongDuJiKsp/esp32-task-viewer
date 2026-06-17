@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use core::{result::Result::Ok, time::Duration};
 use embedded_graphics::{
     mono_font::{ascii::FONT_10X20, MonoTextStyle},
@@ -6,22 +6,37 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use esp_idf_hal::{
-    gpio::{PinDriver, Pull},
-    peripherals::Peripherals,
-};
+use esp_idf_hal::gpio::PinDriver;
 use std::{panic::PanicHookInfo, thread::sleep};
 
-use crate::esp32_sys::{display_raw::DisplayRaw, sys_init::GLOBAL_DISPLAY};
-pub struct PanicHandler;
-struct PanicHandlerInner;
+use crate::esp32_sys::sys_init::GLOBAL_DISPLAY;
+pub struct PanicHandlerIO<'a> {
+    boot_btn: PinDriver<'a, esp_idf_hal::gpio::Input>,
+}
+impl<'a> PanicHandlerIO<'a> {
+    pub fn new(boot_btn: PinDriver<'a, esp_idf_hal::gpio::Input>) -> Self {
+        PanicHandlerIO { boot_btn }
+    }
+}
+
+pub struct PanicHandler<'a> {
+    inner: PanicHandlerInner<'a>,
+}
+struct PanicHandlerInner<'a> {
+    io: PanicHandlerIO<'a>,
+}
 // wrap
-impl PanicHandler {
-    pub fn handle_panic(info: &PanicHookInfo) {
-        if let Err(err) = PanicHandlerInner::try_handle_panic(info) {
+impl<'a> PanicHandler<'a> {
+    pub fn handle_panic(&self, info: &PanicHookInfo) {
+        if let Err(err) = self.inner.try_handle_panic(info) {
             log::error!("Failed to handle panic: {err:#}");
         }
         PanicHandler::wait_forever();
+    }
+
+    pub fn new(io: PanicHandlerIO<'a>) -> Self {
+        let inner = PanicHandlerInner::new(io);
+        PanicHandler { inner }
     }
 
     fn wait_forever() -> ! {
@@ -32,16 +47,24 @@ impl PanicHandler {
 }
 
 // actual implementation
-impl PanicHandlerInner {
-    fn try_handle_panic(info: &PanicHookInfo) -> Result<()> {
+impl<'a> PanicHandlerInner<'a> {
+    fn new(io: PanicHandlerIO<'a>) -> Self {
+        PanicHandlerInner { io }
+    }
+    fn try_handle_panic(&self, info: &PanicHookInfo) -> Result<()> {
         log::error!("Panic occurred: {}", info);
-        PanicHandlerInner::print_panic_info_to_lcd(info)?;
-        PanicHandlerInner::wait_boot_press()?;
+        self.print_panic_info_to_lcd(info)?;
+        self.wait_boot_press()?;
         Ok(())
     }
-    fn print_panic_info_to_lcd(info: &PanicHookInfo) -> Result<()> {
+    fn print_panic_info_to_lcd(&self, info: &PanicHookInfo) -> Result<()> {
         let style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
-        Text::new(info.payload_as_str().unwrap_or("Unknown panic"), Point::new(10, 30), style).draw(
+        Text::new(
+            info.payload_as_str().unwrap_or("Unknown panic"),
+            Point::new(10, 30),
+            style,
+        )
+        .draw(
             GLOBAL_DISPLAY
                 .get()
                 .ok_or_else(|| anyhow::anyhow!("Failed to get global display"))?
@@ -51,14 +74,10 @@ impl PanicHandlerInner {
         )?;
         Ok(())
     }
-    fn wait_boot_press() -> Result<()> {
+    fn wait_boot_press(&self) -> Result<()> {
         log::info!("Press the BOOT button to continue...");
-        let boot_pin = Peripherals::take()
-            .and_then(|p| PinDriver::input(p.pins.gpio0, Pull::Up))
-            .context("failed to initialize BOOT button pin")?;
-
         loop {
-            if boot_pin.is_low() {
+            if self.io.boot_btn.is_low() {
                 log::info!("BOOT button pressed. Restarting...");
                 unsafe {
                     esp_idf_sys::esp_restart();
