@@ -7,7 +7,7 @@ use esp_idf_hal::{
     gpio::{AnyIOPin, PinDriver},
     spi::{SpiConfig, SpiDeviceDriver, SpiDriver, SpiDriverConfig},
 };
-use st7305::St7305;
+use st7305::{BinaryColor, Orientation, St7305};
 type St7305Display<'a> = St7305<
     SPIInterface<SpiDeviceDriver<'a, SpiDriver<'a>>, PinDriver<'a, esp_idf_hal::gpio::Output>>,
     PinDriver<'a, esp_idf_hal::gpio::Output>,
@@ -34,7 +34,7 @@ pub struct DisplayRaw<'a> {
     display: St7305Display<'a>,
 }
 impl<'a> DisplayRaw<'a> {
-    pub fn new<'b:'a>(io: DisplayIO<'b>) -> Result<Self> {
+    pub fn new<'b: 'a>(io: DisplayIO<'b>) -> Result<Self> {
         let spi = SpiDriver::new(
             io.spi,
             io.sclk,
@@ -46,7 +46,11 @@ impl<'a> DisplayRaw<'a> {
         let dc = PinDriver::output(io.dc)?; // DC
         let rst = PinDriver::output(io.rst)?; // RST
         let di = SPIInterface::new(device, dc);
-        let display = St7305::new(di, rst);
+        let mut display = St7305::new(di, rst);
+        let mut delay = esp_idf_hal::delay::Ets;
+        display.init(&mut delay).unwrap();
+        display.set_orientation(Orientation::Landscape);
+        display.color_clear(BinaryColor::Off as u8);
         log::info!("ST7305 display driver initialized successfully");
         Ok(DisplayRaw { display })
     }
