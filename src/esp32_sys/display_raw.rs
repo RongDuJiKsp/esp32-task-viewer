@@ -57,6 +57,9 @@ impl<'a> DisplayRaw<'a> {
             .map_err(|e| anyhow::anyhow!("Failed to initialize display: {:#?}", e))?;
         self.display.set_orientation(Orientation::Landscape);
         self.display.color_clear(BinaryColor::Off as u8);
+        self.display
+            .flush()
+            .map_err(|e| anyhow::anyhow!("Failed to initialize display: {:#?}", e))?;
         Ok(())
     }
     pub fn get_display(&self) -> &St7305Display<'a> {

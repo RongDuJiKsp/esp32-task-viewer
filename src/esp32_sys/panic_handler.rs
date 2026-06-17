@@ -58,20 +58,25 @@ impl<'a> PanicHandlerInner<'a> {
         Ok(())
     }
     fn print_panic_info_to_lcd(&self, info: &PanicHookInfo) -> Result<()> {
+        let lock = GLOBAL_DISPLAY
+            .get()
+            .ok_or_else(|| anyhow::anyhow!("Failed to get global display"))?;
+        let mut display = lock
+            .lock()
+            .map_err(|e| anyhow::anyhow!("Failed to lock global display: {e}"))?;
+        let screen = display.get_display_mut();
+        
         let style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
         Text::new(
             info.payload_as_str().unwrap_or("Unknown panic"),
             Point::new(10, 30),
             style,
         )
-        .draw(
-            GLOBAL_DISPLAY
-                .get()
-                .ok_or_else(|| anyhow::anyhow!("Failed to get global display"))?
-                .lock()
-                .map_err(|e| anyhow::anyhow!("Failed to lock global display: {e}"))?
-                .get_display_mut(),
-        )?;
+        .draw(screen)?;
+        screen
+            .flush()
+            .map_err(|e| anyhow::anyhow!("Failed to flush display: {:#?}", e))?;
+
         Ok(())
     }
     fn wait_boot_press(&self) -> Result<()> {
