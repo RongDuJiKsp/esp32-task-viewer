@@ -10,9 +10,11 @@ use slint::{
     },
     PlatformError, Rgb8Pixel,
 };
-use std::sync::Arc;
-use std::sync::MutexGuard;
-use std::{rc::Rc, sync::Mutex};
+
+use std::{
+    rc::Rc,
+    sync::{Arc, Mutex, MutexGuard},
+};
 
 use super::lib::display_raw::DisplayRaw;
 
@@ -34,21 +36,21 @@ impl BlackPixel {
     }
 }
 
-impl Into<BlackPixel> for Rgb8Pixel {
-    fn into(self) -> BlackPixel {
-        BlackPixel::new(self.r, self.g, self.b)
+impl From<Rgb8Pixel> for BlackPixel {
+    fn from(val: Rgb8Pixel) -> Self {
+        BlackPixel::new(val.r, val.g, val.b)
     }
 }
 
-impl Into<Rgb8Pixel> for BlackPixel {
-    fn into(self) -> Rgb8Pixel {
-        Rgb8Pixel::new(self.red, self.green, self.blue)
+impl From<BlackPixel> for Rgb8Pixel {
+    fn from(val: BlackPixel) -> Self {
+        Rgb8Pixel::new(val.red, val.green, val.blue)
     }
 }
 
-impl Into<BinaryColor> for BlackPixel {
-    fn into(self) -> BinaryColor {
-        if self.is_black() {
+impl From<BlackPixel> for BinaryColor {
+    fn from(val: BlackPixel) -> Self {
+        if val.is_black() {
             BinaryColor::On
         } else {
             BinaryColor::Off
