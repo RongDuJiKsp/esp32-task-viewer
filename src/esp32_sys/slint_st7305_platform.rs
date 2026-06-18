@@ -39,6 +39,10 @@ impl SlintSt7305Platform {
 // event loop
 type EventLoopResult = Result<(), PlatformError>;
 impl SlintSt7305Platform {
+    pub fn event_loop_timer(&self) -> EventLoopResult {
+        slint::platform::update_timers_and_animations();
+        Ok(())
+    }
     pub fn event_loop_render(&self) -> EventLoopResult {
         let mut rendered = false;
 
@@ -63,7 +67,7 @@ impl SlintSt7305Platform {
             esp_idf_hal::delay::FreeRtos::delay_ms(16);
         } else {
             // If there are no active animations, we can afford to wait longer, which can save power.
-            esp_idf_hal::delay::FreeRtos::delay_ms(5000);
+            esp_idf_hal::delay::FreeRtos::delay_ms(200);
         }
         Ok(())
     }
@@ -77,6 +81,7 @@ impl Platform for SlintSt7305Platform {
     }
     fn run_event_loop(&self) -> Result<(), PlatformError> {
         loop {
+            self.event_loop_timer()?;
             self.event_loop_render()?;
             self.event_loop_wait()?;
         }

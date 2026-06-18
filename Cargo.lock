@@ -1528,6 +1528,7 @@ name = "esp32-task-viewer"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "display-interface",
  "display-interface-spi",
  "embassy-time",
