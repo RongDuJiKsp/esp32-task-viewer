@@ -8,7 +8,8 @@ impl BuildToolchain {
         embuild::espidf::sysenv::output();
     }
     fn slint() {
-        let config = slint_build::CompilerConfiguration::new();
+        let config = slint_build::CompilerConfiguration::new()
+            .embed_resources(slint_build::EmbedResourcesKind::EmbedForSoftwareRenderer);
         slint_build::compile_with_config("ui/app.slint", config).unwrap();
     }
 }
