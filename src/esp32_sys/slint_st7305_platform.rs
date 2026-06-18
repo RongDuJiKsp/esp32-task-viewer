@@ -1,3 +1,6 @@
+use super::lib::display_raw::{
+    DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH,
+};
 use anyhow::Result;
 use core::time::Duration;
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::BinaryColor, prelude::Point, Pixel};
@@ -8,15 +11,13 @@ use slint::{
         },
         Platform, WindowAdapter,
     },
-    PlatformError, Rgb8Pixel,
+    PhysicalSize, PlatformError, Rgb8Pixel,
 };
 
 use std::{
     rc::Rc,
     sync::{Arc, Mutex, MutexGuard},
 };
-
-use super::lib::display_raw::DisplayRaw;
 
 pub struct BlackPixel {
     red: u8,
@@ -64,8 +65,13 @@ pub struct SlintSt7305Platform {
 }
 impl SlintSt7305Platform {
     pub fn new(display: Arc<DisplayRaw>) -> Self {
+        let window = MinimalSoftwareWindow::new(RepaintBufferType::ReusedBuffer);
+        window.set_size(PhysicalSize::new(
+            ESP32S3_LCP4_2_SCREEN_WIDTH,
+            ESP32S3_LCP4_2_SCREEN_HEIGHT,
+        ));
         Self {
-            window: MinimalSoftwareWindow::new(RepaintBufferType::ReusedBuffer),
+            window,
             platform_display: SlintSt7305PlatformDisplay::new(display),
         }
     }
@@ -97,19 +103,21 @@ impl Platform for SlintSt7305Platform {
 
 pub struct SlintSt7305PlatformDisplay {
     display: Arc<DisplayRaw>,
-    line_buffer: Mutex<[Rgb565Pixel; 400]>,
+    line_buffer: Mutex<[Rgb565Pixel; ESP32S3_LCP4_2_SCREEN_WIDTH as usize]>,
 }
 impl SlintSt7305PlatformDisplay {
     pub fn new(display: Arc<DisplayRaw>) -> Self {
         Self {
             display,
-            line_buffer: Mutex::new([Rgb565Pixel::default(); 400]),
+            line_buffer: Mutex::new([Rgb565Pixel::default(); ESP32S3_LCP4_2_SCREEN_WIDTH as usize]),
         }
     }
     pub fn get_display_raw(&self) -> &DisplayRaw {
         &self.display
     }
-    pub fn get_buffer(&self) -> Result<MutexGuard<'_, [Rgb565Pixel; 400]>> {
+    pub fn get_buffer(
+        &self,
+    ) -> Result<MutexGuard<'_, [Rgb565Pixel; ESP32S3_LCP4_2_SCREEN_WIDTH as usize]>> {
         self.line_buffer
             .lock()
             .map_err(|e| anyhow::anyhow!("Failed to lock line buffer: {:#?}", e))
@@ -124,11 +132,11 @@ impl LineBufferProvider for &SlintSt7305PlatformDisplay {
         range: core::ops::Range<usize>,
         render_fn: impl FnOnce(&mut [Self::TargetPixel]),
     ) {
-        if range.len() > 400 {
+        if range.len() > ESP32S3_LCP4_2_SCREEN_WIDTH as usize {
             log::warn!("Range length exceeds buffer size: {}", range.len());
         }
         let mut line_buffer = self.get_buffer().unwrap();
-        let pixels = &mut line_buffer[0..range.len().min(400)];
+        let pixels = &mut line_buffer[0..range.len().min(ESP32S3_LCP4_2_SCREEN_WIDTH as usize)];
         render_fn(pixels);
         let mut display = self.display.get_display().unwrap();
 

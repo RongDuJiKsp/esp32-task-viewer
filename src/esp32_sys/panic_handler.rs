@@ -11,11 +11,11 @@ use embedded_text::{alignment::HorizontalAlignment, style::TextBoxStyleBuilder, 
 use esp_idf_hal::gpio::PinDriver;
 use std::{panic::PanicHookInfo, thread::sleep};
 
-use super::lib::display_raw::DisplayRaw;
+use super::lib::display_raw::{
+    DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH,
+};
 use std::sync::Arc;
 
-const ESP32S3_LCP4_2_SCREEN_WIDTH: u32 = 400;
-const ESP32S3_LCP4_2_SCREEN_HEIGHT: u32 = 300;
 pub struct PanicHandlerIO<'a> {
     boot_btn: PinDriver<'a, esp_idf_hal::gpio::Input>,
 }

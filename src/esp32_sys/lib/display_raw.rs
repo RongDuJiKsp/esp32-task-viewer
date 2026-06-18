@@ -12,6 +12,8 @@ pub type St7305Display<'a> = St7305<
     SPIInterface<SpiDeviceDriver<'a, SpiDriver<'a>>, PinDriver<'a, esp_idf_hal::gpio::Output>>,
     PinDriver<'a, esp_idf_hal::gpio::Output>,
 >;
+pub const ESP32S3_LCP4_2_SCREEN_WIDTH: u32 = 400;
+pub const ESP32S3_LCP4_2_SCREEN_HEIGHT: u32 = 300;
 /*
 连接关系：
 ESP32-S3                 ST7305
