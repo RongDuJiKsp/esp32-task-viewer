@@ -11,7 +11,7 @@ use embedded_text::{alignment::HorizontalAlignment, style::TextBoxStyleBuilder, 
 use esp_idf_hal::gpio::PinDriver;
 use std::{panic::PanicHookInfo, thread::sleep};
 
-use crate::esp32_sys::display_raw::DisplayRaw;
+use super::lib::display_raw::DisplayRaw;
 use std::sync::Arc;
 
 const ESP32S3_LCP4_2_SCREEN_WIDTH: u32 = 400;

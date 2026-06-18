@@ -12,7 +12,7 @@ use slint::{
     PlatformError, Rgb8Pixel,
 };
 
-use crate::esp32_sys::display_raw::DisplayRaw;
+use super::lib::display_raw::DisplayRaw;
 
 pub struct BlackPixel {
     red: u8,

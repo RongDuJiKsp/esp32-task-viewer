@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::{panic, sync::OnceLock};
 
 use crate::esp32_sys::{
-    display_raw::{DisplayIO, DisplayRaw},
+    lib::display_raw::{DisplayIO, DisplayRaw},
     panic_handler::{PanicHandler, PanicHandlerIO},
 };
 use esp_idf_hal::{
