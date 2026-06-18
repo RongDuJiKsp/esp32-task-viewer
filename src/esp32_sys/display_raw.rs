@@ -7,12 +7,11 @@ use esp_idf_hal::{
     spi::{SpiConfig, SpiDeviceDriver, SpiDriver, SpiDriverConfig},
 };
 use st7305::{BinaryColor, Orientation, St7305};
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 pub type St7305Display<'a> = St7305<
     SPIInterface<SpiDeviceDriver<'a, SpiDriver<'a>>, PinDriver<'a, esp_idf_hal::gpio::Output>>,
     PinDriver<'a, esp_idf_hal::gpio::Output>,
 >;
-pub type SharedDisplayRaw = Arc<Mutex<DisplayRaw<'static>>>;
 /*
 连接关系：
 ESP32-S3                 ST7305
@@ -31,11 +30,11 @@ pub struct DisplayIO<'a> {
     pub dc: esp_idf_hal::gpio::Gpio5<'a>,
     pub rst: esp_idf_hal::gpio::Gpio41<'a>,
 }
-pub struct DisplayRaw<'a> {
-    display: St7305Display<'a>,
+pub struct DisplayRaw {
+    display: Mutex<St7305Display<'static>>,
 }
-impl<'a> DisplayRaw<'a> {
-    pub fn new<'b: 'a>(io: DisplayIO<'b>) -> Result<Self> {
+impl DisplayRaw {
+    pub fn new(io: DisplayIO<'static>) -> Result<Self> {
         let spi = SpiDriver::new(
             io.spi,
             io.sclk,
@@ -47,35 +46,33 @@ impl<'a> DisplayRaw<'a> {
         let dc = PinDriver::output(io.dc)?; // DC
         let rst = PinDriver::output(io.rst)?; // RST
         let di = SPIInterface::new(device, dc);
-        let display = St7305::new(di, rst);
+        let display = Mutex::new(St7305::new(di, rst));
         log::info!("ST7305 display driver initialized successfully");
         Ok(DisplayRaw { display })
     }
-    pub fn new_shared(io: DisplayIO<'static>) -> Result<SharedDisplayRaw> {
-        let display_raw = DisplayRaw::new(io)?;
-        Ok(Arc::new(Mutex::new(display_raw)))
-    }
-    pub fn init(&mut self) -> Result<()> {
+
+    pub fn init(&self) -> Result<()> {
         let mut delay = esp_idf_hal::delay::Ets;
-        self.display
+        let mut display = self.get_display()?;
+        display
             .init(&mut delay)
             .map_err(|e| anyhow::anyhow!("Failed to initialize display: {:#?}", e))?;
-        self.display.set_orientation(Orientation::Landscape);
-        self.display.color_clear(BinaryColor::Off as u8);
-        self.display
+        display.set_orientation(Orientation::Landscape);
+        display.color_clear(BinaryColor::Off as u8);
+        display
             .flush()
             .map_err(|e| anyhow::anyhow!("Failed to initialize display: {:#?}", e))?;
         Ok(())
     }
-    pub fn get_display(&self) -> &St7305Display<'a> {
-        &self.display
-    }
-    pub fn get_display_mut(&mut self) -> &mut St7305Display<'a> {
-        &mut self.display
+
+    pub fn get_display(&self) -> Result<std::sync::MutexGuard<'_, St7305Display<'static>>> {
+        self.display
+            .lock()
+            .map_err(|e| anyhow::anyhow!("Failed to lock display: {:#?}", e))
     }
 }
 
-impl<'a> Debug for DisplayRaw<'a> {
+impl Debug for DisplayRaw {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("DisplayRaw").finish()
     }

@@ -11,7 +11,8 @@ use embedded_text::{alignment::HorizontalAlignment, style::TextBoxStyleBuilder, 
 use esp_idf_hal::gpio::PinDriver;
 use std::{panic::PanicHookInfo, thread::sleep};
 
-use crate::esp32_sys::display_raw::SharedDisplayRaw;
+use crate::esp32_sys::display_raw::DisplayRaw;
+use std::sync::Arc;
 
 const ESP32S3_LCP4_2_SCREEN_WIDTH: u32 = 400;
 const ESP32S3_LCP4_2_SCREEN_HEIGHT: u32 = 300;
@@ -29,7 +30,7 @@ pub struct PanicHandler<'a> {
 }
 struct PanicHandlerInner<'a> {
     io: PanicHandlerIO<'a>,
-    display: SharedDisplayRaw,
+    display: Arc<DisplayRaw>,
 }
 // wrap
 impl<'a> PanicHandler<'a> {
@@ -40,7 +41,7 @@ impl<'a> PanicHandler<'a> {
         PanicHandler::wait_forever();
     }
 
-    pub fn new(io: PanicHandlerIO<'a>, display: SharedDisplayRaw) -> Self {
+    pub fn new(io: PanicHandlerIO<'a>, display: Arc<DisplayRaw>) -> Self {
         let inner = PanicHandlerInner::new(io, display);
         PanicHandler { inner }
     }
@@ -54,7 +55,7 @@ impl<'a> PanicHandler<'a> {
 
 // actual implementation
 impl<'a> PanicHandlerInner<'a> {
-    fn new(io: PanicHandlerIO<'a>, display: SharedDisplayRaw) -> Self {
+    fn new(io: PanicHandlerIO<'a>, display: Arc<DisplayRaw>) -> Self {
         PanicHandlerInner { io, display }
     }
     fn try_handle_panic(&self, info: &PanicHookInfo) -> Result<()> {
@@ -64,8 +65,7 @@ impl<'a> PanicHandlerInner<'a> {
         Ok(())
     }
     fn print_panic_info_to_lcd(&self, info: &PanicHookInfo) -> Result<()> {
-        let mut display = self.display.lock().map_err(|e| anyhow::anyhow!("Failed to lock display: {:#?}", e))?;
-        let screen = display.get_display_mut();
+        let mut screen = self.display.get_display()?;
 
         let text = format!("SYSTEM PANIC !!!\n\n{}", info);
         let character_style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
@@ -80,7 +80,8 @@ impl<'a> PanicHandlerInner<'a> {
                 ESP32S3_LCP4_2_SCREEN_HEIGHT - 2 * margin,
             ),
         );
-        TextBox::with_textbox_style(&text, area, character_style, textbox_style).draw(screen)?;
+        TextBox::with_textbox_style(&text, area, character_style, textbox_style)
+            .draw(&mut (*screen))?;
 
         screen
             .flush()

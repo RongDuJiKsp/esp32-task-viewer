@@ -1,4 +1,5 @@
 use std::panic;
+use std::sync::Arc;
 
 use crate::esp32_sys::{
     display_raw::{DisplayIO, DisplayRaw},
@@ -35,12 +36,13 @@ impl SysInit {
             rst: peripherals.pins.gpio41,
         };
         log::info!("Initializing display...");
-        let display = DisplayRaw::new_shared(display_pin).unwrap();
-        display.lock().unwrap().init().unwrap();
+        let display = Arc::new(DisplayRaw::new(display_pin).unwrap());
+        display.init().unwrap();
         log::info!("Display initialized successfully");
 
         let panic_handler_io = PinDriver::input(peripherals.pins.gpio0, Pull::Up).unwrap();
-        let panic_handler = PanicHandler::new(PanicHandlerIO::new(panic_handler_io), display.clone());
+        let panic_handler =
+            PanicHandler::new(PanicHandlerIO::new(panic_handler_io), display.clone());
         let panic_handler_ref = Box::leak(Box::new(panic_handler));
         panic::set_hook(Box::new(|info| {
             panic_handler_ref.handle_panic(info);

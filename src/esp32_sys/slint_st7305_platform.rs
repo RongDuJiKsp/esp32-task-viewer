@@ -1,7 +1,6 @@
-use std::rc::Rc;
-
-use super::display_raw::SharedDisplayRaw;
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::BinaryColor, prelude::Point, Pixel};
+use std::rc::Rc;
+use std::sync::Arc;
 
 use slint::{
     platform::{
@@ -10,6 +9,8 @@ use slint::{
     },
     PlatformError, Rgb8Pixel,
 };
+
+use crate::esp32_sys::display_raw::DisplayRaw;
 
 pub struct BlackPixel {
     red: u8,
@@ -53,7 +54,7 @@ impl Into<BinaryColor> for BlackPixel {
 
 pub struct SlintSt7305Platform {
     window: Rc<MinimalSoftwareWindow>,
-    display: SharedDisplayRaw,
+    display: Arc<DisplayRaw>,
     line_buffer: [Rgb565Pixel; 400],
 }
 impl Platform for SlintSt7305Platform {
@@ -75,8 +76,7 @@ impl LineBufferProvider for SlintSt7305Platform {
 
         let pixels = &mut self.line_buffer[0..range.len().max(400)];
         render_fn(pixels);
-        let mut display_raw = self.display.lock().unwrap();
-        let display = display_raw.get_display_mut();
+        let mut display = self.display.get_display().unwrap();
 
         display.draw_iter(pixels.iter().enumerate().map(|(i, px)| {
             let color = Rgb8Pixel::from(*px);
