@@ -1,7 +1,6 @@
+use anyhow::Result;
+use core::time::Duration;
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::BinaryColor, prelude::Point, Pixel};
-use std::rc::Rc;
-use std::sync::Arc;
-
 use slint::{
     platform::{
         software_renderer::{
@@ -11,6 +10,9 @@ use slint::{
     },
     PlatformError, Rgb8Pixel,
 };
+use std::sync::Arc;
+use std::sync::MutexGuard;
+use std::{rc::Rc, sync::Mutex};
 
 use super::lib::display_raw::DisplayRaw;
 
@@ -56,15 +58,13 @@ impl Into<BinaryColor> for BlackPixel {
 
 pub struct SlintSt7305Platform {
     window: Rc<MinimalSoftwareWindow>,
-    display: Arc<DisplayRaw>,
-    line_buffer: [Rgb565Pixel; 400],
+    platform_display: SlintSt7305PlatformDisplay,
 }
 impl SlintSt7305Platform {
     pub fn new(display: Arc<DisplayRaw>) -> Self {
         Self {
             window: MinimalSoftwareWindow::new(RepaintBufferType::ReusedBuffer),
-            display,
-            line_buffer: [Rgb565Pixel::default(); 400],
+            platform_display: SlintSt7305PlatformDisplay::new(display),
         }
     }
 }
@@ -72,8 +72,49 @@ impl Platform for SlintSt7305Platform {
     fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, PlatformError> {
         Ok(self.window.clone())
     }
+    fn duration_since_start(&self) -> Duration {
+        Duration::from_millis(unsafe { esp_idf_hal::sys::esp_timer_get_time() as u64 } / 1000)
+    }
+    fn run_event_loop(&self) -> Result<(), PlatformError> {
+        loop {
+            self.window.draw_if_needed(|renderer| {
+                renderer.render_by_line(&self.platform_display);
+            });
+
+            self.platform_display
+                .get_display_raw()
+                .get_display()
+                .map_err(|e| PlatformError::from(format!("{e}")))?
+                .flush()
+                .map_err(|e| PlatformError::from(format!("{:#?}", e)))?;
+
+            esp_idf_hal::delay::FreeRtos::delay_ms(16);
+        }
+    }
 }
-impl LineBufferProvider for SlintSt7305Platform {
+
+pub struct SlintSt7305PlatformDisplay {
+    display: Arc<DisplayRaw>,
+    line_buffer: Mutex<[Rgb565Pixel; 400]>,
+}
+impl SlintSt7305PlatformDisplay {
+    pub fn new(display: Arc<DisplayRaw>) -> Self {
+        Self {
+            display,
+            line_buffer: Mutex::new([Rgb565Pixel::default(); 400]),
+        }
+    }
+    pub fn get_display_raw(&self) -> &DisplayRaw {
+        &self.display
+    }
+    pub fn get_buffer(&self) -> Result<MutexGuard<'_, [Rgb565Pixel; 400]>> {
+        self.line_buffer
+            .lock()
+            .map_err(|e| anyhow::anyhow!("Failed to lock line buffer: {:#?}", e))
+    }
+}
+
+impl LineBufferProvider for &SlintSt7305PlatformDisplay {
     type TargetPixel = Rgb565Pixel;
     fn process_line(
         &mut self,
@@ -84,8 +125,8 @@ impl LineBufferProvider for SlintSt7305Platform {
         if range.len() > 400 {
             log::warn!("Range length exceeds buffer size: {}", range.len());
         }
-
-        let pixels = &mut self.line_buffer[0..range.len().min(400)];
+        let mut line_buffer = self.get_buffer().unwrap();
+        let pixels = &mut line_buffer[0..range.len().min(400)];
         render_fn(pixels);
         let mut display = self.display.get_display().unwrap();
 
