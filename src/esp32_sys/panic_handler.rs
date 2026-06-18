@@ -11,7 +11,7 @@ use embedded_text::{alignment::HorizontalAlignment, style::TextBoxStyleBuilder, 
 use esp_idf_hal::gpio::PinDriver;
 use std::{panic::PanicHookInfo, thread::sleep};
 
-use crate::esp32_sys::sys_init::GLOBAL_DISPLAY;
+use crate::esp32_sys::display_raw::SharedDisplayRaw;
 
 const ESP32S3_LCP4_2_SCREEN_WIDTH: u32 = 400;
 const ESP32S3_LCP4_2_SCREEN_HEIGHT: u32 = 300;
@@ -29,6 +29,7 @@ pub struct PanicHandler<'a> {
 }
 struct PanicHandlerInner<'a> {
     io: PanicHandlerIO<'a>,
+    display: SharedDisplayRaw,
 }
 // wrap
 impl<'a> PanicHandler<'a> {
@@ -39,8 +40,8 @@ impl<'a> PanicHandler<'a> {
         PanicHandler::wait_forever();
     }
 
-    pub fn new(io: PanicHandlerIO<'a>) -> Self {
-        let inner = PanicHandlerInner::new(io);
+    pub fn new(io: PanicHandlerIO<'a>, display: SharedDisplayRaw) -> Self {
+        let inner = PanicHandlerInner::new(io, display);
         PanicHandler { inner }
     }
 
@@ -53,8 +54,8 @@ impl<'a> PanicHandler<'a> {
 
 // actual implementation
 impl<'a> PanicHandlerInner<'a> {
-    fn new(io: PanicHandlerIO<'a>) -> Self {
-        PanicHandlerInner { io }
+    fn new(io: PanicHandlerIO<'a>, display: SharedDisplayRaw) -> Self {
+        PanicHandlerInner { io, display }
     }
     fn try_handle_panic(&self, info: &PanicHookInfo) -> Result<()> {
         log::error!("Panic occurred: {}", info);
@@ -63,12 +64,7 @@ impl<'a> PanicHandlerInner<'a> {
         Ok(())
     }
     fn print_panic_info_to_lcd(&self, info: &PanicHookInfo) -> Result<()> {
-        let lock = GLOBAL_DISPLAY
-            .get()
-            .ok_or_else(|| anyhow::anyhow!("Failed to get global display"))?;
-        let mut display = lock
-            .lock()
-            .map_err(|e| anyhow::anyhow!("Failed to lock global display: {e}"))?;
+        let mut display = self.display.lock().map_err(|e| anyhow::anyhow!("Failed to lock display: {:#?}", e))?;
         let screen = display.get_display_mut();
 
         let text = format!("SYSTEM PANIC !!!\n\n{}", info);

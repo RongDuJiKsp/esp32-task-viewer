@@ -1,17 +1,18 @@
 #![allow(dead_code)]
-use core::fmt::Debug;
-
 use anyhow::Result;
+use core::fmt::Debug;
 use display_interface_spi::SPIInterface;
 use esp_idf_hal::{
     gpio::{AnyIOPin, PinDriver},
     spi::{SpiConfig, SpiDeviceDriver, SpiDriver, SpiDriverConfig},
 };
 use st7305::{BinaryColor, Orientation, St7305};
-type St7305Display<'a> = St7305<
+use std::sync::{Arc, Mutex};
+pub type St7305Display<'a> = St7305<
     SPIInterface<SpiDeviceDriver<'a, SpiDriver<'a>>, PinDriver<'a, esp_idf_hal::gpio::Output>>,
     PinDriver<'a, esp_idf_hal::gpio::Output>,
 >;
+pub type SharedDisplayRaw = Arc<Mutex<DisplayRaw<'static>>>;
 /*
 连接关系：
 ESP32-S3                 ST7305
@@ -49,6 +50,10 @@ impl<'a> DisplayRaw<'a> {
         let display = St7305::new(di, rst);
         log::info!("ST7305 display driver initialized successfully");
         Ok(DisplayRaw { display })
+    }
+    pub fn new_shared(io: DisplayIO<'static>) -> Result<SharedDisplayRaw> {
+        let display_raw = DisplayRaw::new(io)?;
+        Ok(Arc::new(Mutex::new(display_raw)))
     }
     pub fn init(&mut self) -> Result<()> {
         let mut delay = esp_idf_hal::delay::Ets;
