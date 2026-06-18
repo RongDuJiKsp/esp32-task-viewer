@@ -1,32 +1,89 @@
-use core::cell::RefCell;
 use std::rc::Rc;
 
-use slint::platform::{
-    software_renderer::{LineBufferProvider, MinimalSoftwareWindow, Rgb565Pixel},
-    Platform,
+use super::display_raw::SharedDisplayRaw;
+use embedded_graphics::{draw_target::DrawTarget, pixelcolor::BinaryColor, prelude::Point, Pixel};
+
+use slint::{
+    platform::{
+        software_renderer::{LineBufferProvider, MinimalSoftwareWindow, Rgb565Pixel},
+        Platform, WindowAdapter,
+    },
+    PlatformError, Rgb8Pixel,
 };
 
-use super::display_raw::St7305Display;
-pub struct SlintSt7305Platform<'a> {
-    window: Rc<MinimalSoftwareWindow>,
-    display: RefCell<St7305Display<'a>>,
+pub struct BlackPixel {
+    red: u8,
+    green: u8,
+    blue: u8,
 }
-impl<'a> Platform for SlintSt7305Platform<'a> {
-    fn create_window_adapter(
-        &self,
-    ) -> Result<Rc<dyn slint::platform::WindowAdapter>, slint::PlatformError> {
+
+impl BlackPixel {
+    pub fn new(red: u8, green: u8, blue: u8) -> Self {
+        BlackPixel { red, green, blue }
+    }
+    pub fn get_gray(&self) -> u16 {
+        (self.red as u16 * 30 + self.green as u16 * 59 + self.blue as u16 * 11) / 100
+    }
+    pub fn is_black(&self) -> bool {
+        self.get_gray() > 128
+    }
+}
+
+impl Into<BlackPixel> for Rgb8Pixel {
+    fn into(self) -> BlackPixel {
+        BlackPixel::new(self.r, self.g, self.b)
+    }
+}
+
+impl Into<Rgb8Pixel> for BlackPixel {
+    fn into(self) -> Rgb8Pixel {
+        Rgb8Pixel::new(self.red, self.green, self.blue)
+    }
+}
+
+impl Into<BinaryColor> for BlackPixel {
+    fn into(self) -> BinaryColor {
+        if self.is_black() {
+            BinaryColor::On
+        } else {
+            BinaryColor::Off
+        }
+    }
+}
+
+pub struct SlintSt7305Platform {
+    window: Rc<MinimalSoftwareWindow>,
+    display: SharedDisplayRaw,
+    line_buffer: [Rgb565Pixel; 400],
+}
+impl Platform for SlintSt7305Platform {
+    fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, PlatformError> {
         Ok(self.window.clone())
     }
 }
-impl<'a> LineBufferProvider for SlintSt7305Platform<'a> {
+impl LineBufferProvider for SlintSt7305Platform {
     type TargetPixel = Rgb565Pixel;
-
     fn process_line(
         &mut self,
-        line: usize,
-        range: std::ops::Range<usize>,
+        y: usize,
+        range: core::ops::Range<usize>,
         render_fn: impl FnOnce(&mut [Self::TargetPixel]),
     ) {
-        todo!()
+        if range.len() > 400 {
+            log::warn!("Range length exceeds buffer size: {}", range.len());
+        }
+
+        let pixels = &mut self.line_buffer[0..range.len().max(400)];
+        render_fn(pixels);
+        let mut display_raw = self.display.lock().unwrap();
+        let display = display_raw.get_display_mut();
+
+        display.draw_iter(pixels.iter().enumerate().map(|(i, px)| {
+            let color = Rgb8Pixel::from(*px);
+            let x = range.start + i;
+            let black_pixel: BlackPixel = color.into();
+
+            Pixel(Point::new(x as i32, y as i32), black_pixel.into())
+        }));
     }
 }
