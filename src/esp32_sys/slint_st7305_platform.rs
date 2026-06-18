@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use slint::{
     platform::{
-        software_renderer::{LineBufferProvider, MinimalSoftwareWindow, Rgb565Pixel},
+        software_renderer::{
+            LineBufferProvider, MinimalSoftwareWindow, RepaintBufferType, Rgb565Pixel,
+        },
         Platform, WindowAdapter,
     },
     PlatformError, Rgb8Pixel,
@@ -57,6 +59,15 @@ pub struct SlintSt7305Platform {
     display: Arc<DisplayRaw>,
     line_buffer: [Rgb565Pixel; 400],
 }
+impl SlintSt7305Platform {
+    pub fn new(display: Arc<DisplayRaw>) -> Self {
+        Self {
+            window: MinimalSoftwareWindow::new(RepaintBufferType::ReusedBuffer),
+            display,
+            line_buffer: [Rgb565Pixel::default(); 400],
+        }
+    }
+}
 impl Platform for SlintSt7305Platform {
     fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, PlatformError> {
         Ok(self.window.clone())
@@ -74,7 +85,7 @@ impl LineBufferProvider for SlintSt7305Platform {
             log::warn!("Range length exceeds buffer size: {}", range.len());
         }
 
-        let pixels = &mut self.line_buffer[0..range.len().max(400)];
+        let pixels = &mut self.line_buffer[0..range.len().min(400)];
         render_fn(pixels);
         let mut display = self.display.get_display().unwrap();
 

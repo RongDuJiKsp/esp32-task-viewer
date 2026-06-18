@@ -1,5 +1,6 @@
-use std::panic;
+use core::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::{panic, sync::OnceLock};
 
 use crate::esp32_sys::{
     display_raw::{DisplayIO, DisplayRaw},
@@ -9,12 +10,19 @@ use esp_idf_hal::{
     gpio::{PinDriver, Pull},
     peripherals::Peripherals,
 };
+
+static INIT_FLAG: AtomicBool = AtomicBool::new(false);
+static GLOBAL_DISPLAY: OnceLock<Arc<DisplayRaw>> = OnceLock::new();
 pub struct SysInit;
 impl SysInit {
     pub fn init_sys() {
+        if INIT_FLAG.load(Ordering::Relaxed) {
+            panic!("Repeated Init")
+        }
         Self::init_patches();
         Self::init_logger();
         Self::init_pins();
+        INIT_FLAG.store(true, Ordering::Relaxed);
     }
     fn init_patches() {
         esp_idf_svc::sys::link_patches();
@@ -47,5 +55,17 @@ impl SysInit {
         panic::set_hook(Box::new(|info| {
             panic_handler_ref.handle_panic(info);
         }));
+
+        GLOBAL_DISPLAY.set(display).unwrap();
+    }
+}
+
+pub struct SysStore;
+impl SysStore {
+    pub fn get_display() -> Arc<DisplayRaw> {
+        GLOBAL_DISPLAY
+            .get()
+            .expect("Display not initialized")
+            .clone()
     }
 }
