@@ -58,7 +58,13 @@ impl SlintSt7305Platform {
         Ok(())
     }
     pub fn event_loop_wait(&self) -> EventLoopResult {
-        esp_idf_hal::delay::FreeRtos::delay_ms(16);
+        if self.window.has_active_animations() {
+            // If there are active animations, we should aim for a higher frame rate, so we wait for a shorter duration.
+            esp_idf_hal::delay::FreeRtos::delay_ms(16);
+        } else {
+            // If there are no active animations, we can afford to wait longer, which can save power.
+            esp_idf_hal::delay::FreeRtos::delay_ms(5000);
+        }
         Ok(())
     }
 }
