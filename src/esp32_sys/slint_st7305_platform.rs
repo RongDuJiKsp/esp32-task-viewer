@@ -2,7 +2,7 @@ use super::lib::display_raw::{
     DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH,
 };
 use anyhow::Result;
-use core::time::Duration;
+use core::{result::Result::Ok, time::Duration};
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::BinaryColor, prelude::Point, Pixel};
 use slint::{
     platform::{
@@ -18,46 +18,6 @@ use std::{
     rc::Rc,
     sync::{Arc, Mutex, MutexGuard},
 };
-
-pub struct BlackPixel {
-    red: u8,
-    green: u8,
-    blue: u8,
-}
-
-impl BlackPixel {
-    pub fn new(red: u8, green: u8, blue: u8) -> Self {
-        BlackPixel { red, green, blue }
-    }
-    pub fn get_gray(&self) -> u16 {
-        (self.red as u16 * 30 + self.green as u16 * 59 + self.blue as u16 * 11) / 100
-    }
-    pub fn is_black(&self) -> bool {
-        self.get_gray() > 128
-    }
-}
-
-impl From<Rgb8Pixel> for BlackPixel {
-    fn from(val: Rgb8Pixel) -> Self {
-        BlackPixel::new(val.r, val.g, val.b)
-    }
-}
-
-impl From<BlackPixel> for Rgb8Pixel {
-    fn from(val: BlackPixel) -> Self {
-        Rgb8Pixel::new(val.red, val.green, val.blue)
-    }
-}
-
-impl From<BlackPixel> for BinaryColor {
-    fn from(val: BlackPixel) -> Self {
-        if val.is_black() {
-            BinaryColor::On
-        } else {
-            BinaryColor::Off
-        }
-    }
-}
 
 pub struct SlintSt7305Platform {
     window: Rc<MinimalSoftwareWindow>,
@@ -76,6 +36,32 @@ impl SlintSt7305Platform {
         }
     }
 }
+// event loop
+type EventLoopResult = Result<(), PlatformError>;
+impl SlintSt7305Platform {
+    pub fn event_loop_render(&self) -> EventLoopResult {
+        let mut rendered = false;
+
+        self.window.draw_if_needed(|renderer| {
+            renderer.render_by_line(&self.platform_display);
+            rendered = true;
+        });
+
+        if rendered {
+            self.platform_display
+                .get_display_raw()
+                .get_display()
+                .map_err(|e| PlatformError::from(format!("{e}")))?
+                .flush()
+                .map_err(|e| PlatformError::from(format!("{:#?}", e)))?;
+        }
+        Ok(())
+    }
+    pub fn event_loop_wait(&self) -> EventLoopResult {
+        esp_idf_hal::delay::FreeRtos::delay_ms(16);
+        Ok(())
+    }
+}
 impl Platform for SlintSt7305Platform {
     fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, PlatformError> {
         Ok(self.window.clone())
@@ -85,18 +71,8 @@ impl Platform for SlintSt7305Platform {
     }
     fn run_event_loop(&self) -> Result<(), PlatformError> {
         loop {
-            self.window.draw_if_needed(|renderer| {
-                renderer.render_by_line(&self.platform_display);
-            });
-
-            self.platform_display
-                .get_display_raw()
-                .get_display()
-                .map_err(|e| PlatformError::from(format!("{e}")))?
-                .flush()
-                .map_err(|e| PlatformError::from(format!("{:#?}", e)))?;
-
-            esp_idf_hal::delay::FreeRtos::delay_ms(16);
+            self.event_loop_render()?;
+            self.event_loop_wait()?;
         }
     }
 }
@@ -147,5 +123,45 @@ impl LineBufferProvider for &SlintSt7305PlatformDisplay {
 
             Pixel(Point::new(x as i32, y as i32), black_pixel.into())
         }));
+    }
+}
+
+pub struct BlackPixel {
+    red: u8,
+    green: u8,
+    blue: u8,
+}
+
+impl BlackPixel {
+    pub fn new(red: u8, green: u8, blue: u8) -> Self {
+        BlackPixel { red, green, blue }
+    }
+    pub fn get_gray(&self) -> u16 {
+        (self.red as u16 * 30 + self.green as u16 * 59 + self.blue as u16 * 11) / 100
+    }
+    pub fn is_black(&self) -> bool {
+        self.get_gray() > 128
+    }
+}
+
+impl From<Rgb8Pixel> for BlackPixel {
+    fn from(val: Rgb8Pixel) -> Self {
+        BlackPixel::new(val.r, val.g, val.b)
+    }
+}
+
+impl From<BlackPixel> for Rgb8Pixel {
+    fn from(val: BlackPixel) -> Self {
+        Rgb8Pixel::new(val.red, val.green, val.blue)
+    }
+}
+
+impl From<BlackPixel> for BinaryColor {
+    fn from(val: BlackPixel) -> Self {
+        if val.is_black() {
+            BinaryColor::On
+        } else {
+            BinaryColor::Off
+        }
     }
 }
