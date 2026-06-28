@@ -9,7 +9,7 @@ use esp32s3_buttons_driver::{ButtonViewer, ButtonsIO};
 use esp32s3_st7305_lcd_display::{DisplayIO, DisplayRaw};
 use esp_idf_hal::peripherals::Peripherals;
 
-use crate::esp32_sys::panic_handler::{PanicHandler, PanicHandlerIO};
+use crate::esp32_sys::panic_handler::PanicHandler;
 
 static INIT_FLAG: AtomicBool = AtomicBool::new(false);
 static GLOBAL_DISPLAY: OnceLock<Arc<DisplayRaw>> = OnceLock::new();
@@ -58,8 +58,7 @@ impl SysInit {
         let buttons = Arc::new(ButtonViewer::new(buttons_pin).unwrap());
         log::info!("Button viewer initialized successfully");
 
-        let panic_handler =
-            PanicHandler::new(PanicHandlerIO::new(buttons.clone()), display.clone());
+        let panic_handler = PanicHandler::new(buttons.clone(), display.clone());
         let panic_handler_ref = Box::leak(Box::new(panic_handler));
         panic::set_hook(Box::new(|info| {
             panic_handler_ref.handle_panic(info);

@@ -13,20 +13,11 @@ use esp32s3_st7305_lcd_display::{
     DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH,
 };
 
-pub struct PanicHandlerIO {
-    buttons: Arc<ButtonViewer>,
-}
-impl PanicHandlerIO {
-    pub fn new(buttons: Arc<ButtonViewer>) -> Self {
-        PanicHandlerIO { buttons }
-    }
-}
-
 pub struct PanicHandler {
     inner: PanicHandlerInner,
 }
 struct PanicHandlerInner {
-    io: PanicHandlerIO,
+    buttons: Arc<ButtonViewer>,
     display: Arc<DisplayRaw>,
 }
 impl PanicHandler {
@@ -37,8 +28,8 @@ impl PanicHandler {
         PanicHandler::wait_forever();
     }
 
-    pub fn new(io: PanicHandlerIO, display: Arc<DisplayRaw>) -> Self {
-        let inner = PanicHandlerInner::new(io, display);
+    pub fn new(buttons: Arc<ButtonViewer>, display: Arc<DisplayRaw>) -> Self {
+        let inner = PanicHandlerInner::new(buttons, display);
         PanicHandler { inner }
     }
 
@@ -51,8 +42,8 @@ impl PanicHandler {
 
 // actual implementation
 impl PanicHandlerInner {
-    fn new(io: PanicHandlerIO, display: Arc<DisplayRaw>) -> Self {
-        PanicHandlerInner { io, display }
+    fn new(buttons: Arc<ButtonViewer>, display: Arc<DisplayRaw>) -> Self {
+        PanicHandlerInner { buttons, display }
     }
 
     fn try_handle_panic(&self, info: &PanicHookInfo<'_>) -> Result<()> {
@@ -87,7 +78,7 @@ impl PanicHandlerInner {
     fn wait_boot_press(&self) -> Result<()> {
         log::info!("Press the BOOT button to continue...");
         loop {
-            if self.io.buttons.button_raw()?.is_boot_pressed() {
+            if self.buttons.button_raw()?.is_boot_pressed() {
                 log::info!("BOOT button pressed. Restarting...");
                 // SAFETY: esp_restart() performs a full chip reset.
                 // Called only in panic context after displaying panic info to LCD,
