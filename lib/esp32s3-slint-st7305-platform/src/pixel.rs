@@ -13,7 +13,7 @@ impl BlackPixel {
     }
 
     pub fn get_gray(&self) -> u16 {
-        (self.red as u16 * 30 + self.green as u16 * 59 + self.blue as u16 * 11) / 100
+        (u16::from(self.red) * 30 + u16::from(self.green) * 59 + u16::from(self.blue) * 11) / 100
     }
 
     pub fn is_black(&self) -> bool {

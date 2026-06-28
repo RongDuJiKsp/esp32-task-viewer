@@ -39,20 +39,23 @@ impl BatteryMonitor {
     }
 
     /// 读取电池电压 (mV)
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     pub fn read_voltage_mv(&self) -> Result<u32> {
-        let raw = self.read_raw()? as f32;
+        let raw = f32::from(self.read_raw()?);
         let adc_mv = raw * ADC_REF_MV / ADC_MAX_RAW;
         let battery_mv = adc_mv * VOLTAGE_DIVIDER_RATIO;
         Ok(battery_mv as u32)
     }
 
     /// 读取电池电压 (V)
+    #[allow(clippy::cast_precision_loss)]
     pub fn read_voltage_v(&self) -> Result<f32> {
         let mv = self.read_voltage_mv()?;
         Ok(mv as f32 / 1000.0)
     }
 
     /// 读取电池电量百分比 (0-100)
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     pub fn read_soc(&self) -> Result<u8> {
         let voltage = self.read_voltage_v()?;
         let soc = self.estimator.estimate_soc(voltage).map_err(|e| anyhow::anyhow!("{e}"))?;

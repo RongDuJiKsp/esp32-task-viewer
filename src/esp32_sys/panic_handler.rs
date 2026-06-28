@@ -53,6 +53,7 @@ impl PanicHandlerInner {
         Ok(())
     }
 
+    #[allow(clippy::cast_possible_wrap)]
     fn print_panic_info_to_lcd(&self, info: &PanicHookInfo<'_>) -> Result<()> {
         let mut screen = self.display.get_display()?;
 

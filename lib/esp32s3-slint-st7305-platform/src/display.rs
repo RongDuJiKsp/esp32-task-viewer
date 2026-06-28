@@ -36,7 +36,7 @@ impl SlintSt7305PlatformDisplay {
 
 impl LineBufferProvider for &SlintSt7305PlatformDisplay {
     type TargetPixel = Rgb565Pixel;
-
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     fn process_line(
         &mut self,
         y: usize,

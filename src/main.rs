@@ -17,7 +17,7 @@ fn main() {
     timer.start(slint::TimerMode::Repeated, core::time::Duration::from_millis(1000), move || {
         // 电池电量与电压
         match battery.read_soc() {
-            Ok(soc) => ui_ref.set_battery(soc as i32),
+            Ok(soc) => ui_ref.set_battery(i32::from(soc)),
             Err(e) => log::warn!("Failed to read battery SOC: {e}"),
         }
         match battery.read_voltage_v() {

@@ -35,11 +35,8 @@ impl SlintSt7305Platform {
     }
 
     pub fn event_loop_render(&self) -> EventLoopResult {
-        let mut rendered = false;
-
-        self.window.draw_if_needed(|renderer| {
-            renderer.render_by_line(&self.platform_display);
-            rendered = true;
+        let rendered = self.window.draw_if_needed(|renderer| {
+            let _reg = renderer.render_by_line(&self.platform_display);
         });
 
         if rendered {
@@ -68,8 +65,11 @@ impl Platform for SlintSt7305Platform {
         Ok(self.window.clone())
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     fn duration_since_start(&self) -> Duration {
-        Duration::from_millis(unsafe { esp_idf_hal::sys::esp_timer_get_time() as u64 } / 1000)
+        Duration::from_millis(
+            unsafe { esp_idf_hal::sys::esp_timer_get_time().cast_unsigned() } / 1000,
+        )
     }
 
     fn run_event_loop(&self) -> Result<(), PlatformError> {
