@@ -7,7 +7,7 @@ use crate::{adc::Adc, BatteryIO};
 
 /// 电压分压比：实际电池电压 = ADC读取电压 × VOLTAGE_DIVIDER_RATIO
 const VOLTAGE_DIVIDER_RATIO: f32 = 3.0;
-/// ADC 参考电压 (mV)，Atten11dB 对应 ~3100mV
+/// ADC 参考电压 (mV)，Atten12dB 对应 ~3100mV
 const ADC_REF_MV: f32 = 3100.0;
 /// ESP32-S3 ADC 分辨率 (12-bit)
 const ADC_MAX_RAW: f32 = 4095.0;
