@@ -1524,30 +1524,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "esp32-slint-platform"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "embedded-graphics",
- "esp-idf-hal",
- "esp32-st7305-driver",
- "log",
- "slint",
-]
-
-[[package]]
-name = "esp32-st7305-driver"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "display-interface",
- "display-interface-spi",
- "esp-idf-hal",
- "log",
- "st7305",
-]
-
-[[package]]
 name = "esp32-task-viewer"
 version = "0.1.0"
 dependencies = [
@@ -1560,11 +1536,35 @@ dependencies = [
  "esp-idf-hal",
  "esp-idf-svc",
  "esp-idf-sys",
- "esp32-slint-platform",
- "esp32-st7305-driver",
+ "esp32s3-slint-st7305-platform",
+ "esp32s3-st7305-lcd-display",
  "log",
  "slint",
  "slint-build",
+]
+
+[[package]]
+name = "esp32s3-slint-st7305-platform"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "embedded-graphics",
+ "esp-idf-hal",
+ "esp32s3-st7305-lcd-display",
+ "log",
+ "slint",
+]
+
+[[package]]
+name = "esp32s3-st7305-lcd-display"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "display-interface",
+ "display-interface-spi",
+ "esp-idf-hal",
+ "log",
+ "st7305",
 ]
 
 [[package]]

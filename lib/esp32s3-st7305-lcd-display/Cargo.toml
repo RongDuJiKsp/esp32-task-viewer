@@ -1,5 +1,5 @@
 [package]
-name = "esp32-st7305-driver"
+name = "esp32s3-st7305-lcd-display"
 version = "0.1.0"
 edition = "2021"
 resolver = "2"

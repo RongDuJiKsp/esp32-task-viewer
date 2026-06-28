@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::{panic, sync::OnceLock};
 
 use crate::esp32_sys::panic_handler::{PanicHandler, PanicHandlerIO};
-use esp32_st7305_driver::{DisplayIO, DisplayRaw};
+use esp32s3_st7305_lcd_display::{DisplayIO, DisplayRaw};
 use esp_idf_hal::{
     gpio::{PinDriver, Pull},
     peripherals::Peripherals,

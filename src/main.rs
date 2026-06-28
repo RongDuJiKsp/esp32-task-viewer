@@ -1,5 +1,5 @@
 mod esp32_sys;
-use esp32_slint_platform::SlintSt7305Platform;
+use esp32s3_slint_st7305_platform::SlintSt7305Platform;
 use esp32_sys::sys_init::{SysInit, SysStore};
 use slint::platform;
 

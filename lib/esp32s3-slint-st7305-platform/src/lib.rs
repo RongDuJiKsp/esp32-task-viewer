@@ -1,7 +1,7 @@
 use anyhow::Result;
 use core::time::Duration;
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::BinaryColor, prelude::Point, Pixel};
-use esp32_st7305_driver::{
+use esp32s3_st7305_lcd_display::{
     DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH,
 };
 use slint::{
