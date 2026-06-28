@@ -35,6 +35,6 @@ impl<'a> Adc<'a> {
     }
 
     pub fn read_raw(&mut self) -> Result<u16> {
-        Ok(self.channel.read_raw()?)
+        self.channel.read_raw().map_err(|e| anyhow::anyhow!("{e}"))
     }
 }

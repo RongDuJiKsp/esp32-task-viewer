@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use anyhow::Result;
 use display_interface_spi::SPIInterface;
 use esp_idf_hal::{
-    gpio::{AnyIOPin, PinDriver},
+    gpio::{AnyIOPin, PinDriver,Output},
     spi::{SpiConfig, SpiDeviceDriver, SpiDriver, SpiDriverConfig},
 };
 use st7305::{BinaryColor, Orientation, St7305};
@@ -12,8 +12,8 @@ use st7305::{BinaryColor, Orientation, St7305};
 use crate::DisplayIO;
 
 pub type St7305Display<'a> = St7305<
-    SPIInterface<SpiDeviceDriver<'a, SpiDriver<'a>>, PinDriver<'a, esp_idf_hal::gpio::Output>>,
-    PinDriver<'a, esp_idf_hal::gpio::Output>,
+    SPIInterface<SpiDeviceDriver<'a, SpiDriver<'a>>, PinDriver<'a, Output>>,
+    PinDriver<'a, Output>,
 >;
 
 pub struct DisplayRaw {

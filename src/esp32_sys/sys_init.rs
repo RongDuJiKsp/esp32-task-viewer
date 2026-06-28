@@ -5,16 +5,15 @@ use std::{
 };
 
 use esp32s3_battery_monitor::{BatteryChemistry, BatteryIO, BatteryMonitor};
+use esp32s3_buttons_driver::{ButtonViewer, ButtonsIO};
 use esp32s3_st7305_lcd_display::{DisplayIO, DisplayRaw};
-use esp_idf_hal::{
-    gpio::{PinDriver, Pull},
-    peripherals::Peripherals,
-};
+use esp_idf_hal::peripherals::Peripherals;
 
 use crate::esp32_sys::panic_handler::{PanicHandler, PanicHandlerIO};
 
 static INIT_FLAG: AtomicBool = AtomicBool::new(false);
 static GLOBAL_DISPLAY: OnceLock<Arc<DisplayRaw>> = OnceLock::new();
+static GLOBAL_BUTTONS: OnceLock<Arc<ButtonViewer>> = OnceLock::new();
 static GLOBAL_BATTERY: OnceLock<Arc<BatteryMonitor>> = OnceLock::new();
 pub struct SysInit;
 impl SysInit {
@@ -54,15 +53,20 @@ impl SysInit {
         display.init().unwrap();
         log::info!("Display initialized successfully");
 
-        let panic_handler_io = PinDriver::input(peripherals.pins.gpio0, Pull::Up).unwrap();
+        let buttons_pin = ButtonsIO { boot: peripherals.pins.gpio0, key: peripherals.pins.gpio18 };
+        log::info!("Initializing button viewer...");
+        let buttons = Arc::new(ButtonViewer::new(buttons_pin).unwrap());
+        log::info!("Button viewer initialized successfully");
+
         let panic_handler =
-            PanicHandler::new(PanicHandlerIO::new(panic_handler_io), display.clone());
+            PanicHandler::new(PanicHandlerIO::new(buttons.clone()), display.clone());
         let panic_handler_ref = Box::leak(Box::new(panic_handler));
         panic::set_hook(Box::new(|info| {
             panic_handler_ref.handle_panic(info);
         }));
 
         GLOBAL_DISPLAY.set(display).unwrap();
+        GLOBAL_BUTTONS.set(buttons).unwrap();
 
         let battery_pin = BatteryIO { adc: peripherals.adc1, battery_pin: peripherals.pins.gpio4 };
         log::info!("Initializing battery monitor...");
@@ -76,6 +80,10 @@ pub struct SysStore;
 impl SysStore {
     pub fn get_display() -> Arc<DisplayRaw> {
         GLOBAL_DISPLAY.get().expect("Display not initialized").clone()
+    }
+
+    pub fn get_buttons() -> Arc<ButtonViewer> {
+        GLOBAL_BUTTONS.get().expect("Buttons not initialized").clone()
     }
 
     pub fn get_battery() -> Arc<BatteryMonitor> {

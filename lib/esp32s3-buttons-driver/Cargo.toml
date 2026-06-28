@@ -1,0 +1,13 @@
+[package]
+name = "esp32s3-buttons-driver"
+version = "0.1.0"
+edition = "2021"
+resolver = "2"
+
+[lints]
+workspace = true
+
+[dependencies]
+log = "0.4"
+esp-idf-hal = "0.46.2"
+anyhow = "1.0.102"

@@ -1547,6 +1547,7 @@ dependencies = [
  "esp-idf-svc",
  "esp-idf-sys",
  "esp32s3-battery-monitor",
+ "esp32s3-buttons-driver",
  "esp32s3-slint-st7305-platform",
  "esp32s3-st7305-lcd-display",
  "log",
@@ -1560,6 +1561,15 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "battery-estimator",
+ "esp-idf-hal",
+ "log",
+]
+
+[[package]]
+name = "esp32s3-buttons-driver"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "esp-idf-hal",
  "log",
 ]

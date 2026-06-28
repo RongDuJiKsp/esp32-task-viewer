@@ -1,4 +1,4 @@
-use std::{panic::PanicHookInfo, sync::Arc};
+use std::{panic::PanicHookInfo, sync::Arc, time::Instant};
 
 use anyhow::Result;
 use embedded_graphics::{
@@ -8,29 +8,28 @@ use embedded_graphics::{
     primitives::Rectangle,
 };
 use embedded_text::{alignment::HorizontalAlignment, style::TextBoxStyleBuilder, TextBox};
+use esp32s3_buttons_driver::ButtonViewer;
 use esp32s3_st7305_lcd_display::{
     DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH,
 };
-use esp_idf_hal::gpio::PinDriver;
 
-pub struct PanicHandlerIO<'a> {
-    boot_btn: PinDriver<'a, esp_idf_hal::gpio::Input>,
+pub struct PanicHandlerIO {
+    buttons: Arc<ButtonViewer>,
 }
-impl<'a> PanicHandlerIO<'a> {
-    pub fn new(boot_btn: PinDriver<'a, esp_idf_hal::gpio::Input>) -> Self {
-        PanicHandlerIO { boot_btn }
+impl PanicHandlerIO {
+    pub fn new(buttons: Arc<ButtonViewer>) -> Self {
+        PanicHandlerIO { buttons }
     }
 }
 
-pub struct PanicHandler<'a> {
-    inner: PanicHandlerInner<'a>,
+pub struct PanicHandler {
+    inner: PanicHandlerInner,
 }
-struct PanicHandlerInner<'a> {
-    io: PanicHandlerIO<'a>,
+struct PanicHandlerInner {
+    io: PanicHandlerIO,
     display: Arc<DisplayRaw>,
 }
-// wrap
-impl<'a> PanicHandler<'a> {
+impl PanicHandler {
     pub fn handle_panic(&self, info: &PanicHookInfo<'_>) {
         if let Err(err) = self.inner.try_handle_panic(info) {
             log::error!("Failed to handle panic: {err:#}");
@@ -38,7 +37,7 @@ impl<'a> PanicHandler<'a> {
         PanicHandler::wait_forever();
     }
 
-    pub fn new(io: PanicHandlerIO<'a>, display: Arc<DisplayRaw>) -> Self {
+    pub fn new(io: PanicHandlerIO, display: Arc<DisplayRaw>) -> Self {
         let inner = PanicHandlerInner::new(io, display);
         PanicHandler { inner }
     }
@@ -51,19 +50,19 @@ impl<'a> PanicHandler<'a> {
 }
 
 // actual implementation
-impl<'a> PanicHandlerInner<'a> {
-    fn new(io: PanicHandlerIO<'a>, display: Arc<DisplayRaw>) -> Self {
+impl PanicHandlerInner {
+    fn new(io: PanicHandlerIO, display: Arc<DisplayRaw>) -> Self {
         PanicHandlerInner { io, display }
     }
 
-    fn try_handle_panic(&self, info: &PanicHookInfo) -> Result<()> {
+    fn try_handle_panic(&self, info: &PanicHookInfo<'_>) -> Result<()> {
         log::error!("Panic occurred: {}", info);
         self.print_panic_info_to_lcd(info)?;
         self.wait_boot_press()?;
         Ok(())
     }
 
-    fn print_panic_info_to_lcd(&self, info: &PanicHookInfo) -> Result<()> {
+    fn print_panic_info_to_lcd(&self, info: &PanicHookInfo<'_>) -> Result<()> {
         let mut screen = self.display.get_display()?;
 
         let text = format!("SYSTEM PANIC !!!\n\n{}", info);
@@ -88,7 +87,7 @@ impl<'a> PanicHandlerInner<'a> {
     fn wait_boot_press(&self) -> Result<()> {
         log::info!("Press the BOOT button to continue...");
         loop {
-            if self.io.boot_btn.is_low() {
+            if self.io.buttons.button_raw()?.is_boot_pressed() {
                 log::info!("BOOT button pressed. Restarting...");
                 // SAFETY: esp_restart() performs a full chip reset.
                 // Called only in panic context after displaying panic info to LCD,
@@ -97,7 +96,10 @@ impl<'a> PanicHandlerInner<'a> {
                     esp_idf_sys::esp_restart();
                 }
             }
-            esp_idf_hal::delay::FreeRtos::delay_ms(3000);
+            let deadline = Instant::now() + core::time::Duration::from_millis(3000);
+            while Instant::now() < deadline {
+                core::hint::spin_loop();
+            }
         }
     }
 }
