@@ -26,7 +26,7 @@ impl DisplayRaw {
             io.spi,
             io.sclk,
             io.mosi,
-            Option::<AnyIOPin>::None, // MISO
+            Option::<AnyIOPin<'_>>::None, // MISO
             &SpiDriverConfig::new(),
         )?;
         let device = SpiDeviceDriver::new(spi, Some(io.cs), &SpiConfig::new())?;
