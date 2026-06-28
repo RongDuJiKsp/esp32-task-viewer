@@ -1524,6 +1524,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "esp32-slint-platform"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "embedded-graphics",
+ "esp-idf-hal",
+ "esp32-st7305-driver",
+ "log",
+ "slint",
+]
+
+[[package]]
 name = "esp32-st7305-driver"
 version = "0.1.0"
 dependencies = [
@@ -1548,6 +1560,7 @@ dependencies = [
  "esp-idf-hal",
  "esp-idf-svc",
  "esp-idf-sys",
+ "esp32-slint-platform",
  "esp32-st7305-driver",
  "log",
  "slint",

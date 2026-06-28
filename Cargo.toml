@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [".", "esp32-st7305-driver"]
+members = ["lib/*","."]
 
 [package]
 name = "esp32-task-viewer"
@@ -32,7 +32,8 @@ anyhow = "1.0.102"
 embedded-graphics = "0.8.2"
 embedded-text = "0.7.3"
 chrono = "0.4.45"
-esp32-st7305-driver = { path = "esp32-st7305-driver" }
+esp32-st7305-driver = { path = "lib/esp32-st7305-driver" }
+esp32-slint-platform = { path = "lib/esp32-slint-platform" }
 
 [build-dependencies]
 embuild = "0.33"

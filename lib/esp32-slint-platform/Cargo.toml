@@ -1,0 +1,17 @@
+[package]
+name = "esp32-slint-platform"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+log = "0.4"
+esp32-st7305-driver = { version = "0.1.0", path = "../esp32-st7305-driver" }
+esp-idf-hal = "0.46.2"
+anyhow = "1.0.102"
+embedded-graphics = "0.8.2"
+slint = { version = "1.16", default-features = false, features = [
+    "compat-1-2",
+    "unsafe-single-threaded",
+    "libm",
+    "renderer-software",
+] }

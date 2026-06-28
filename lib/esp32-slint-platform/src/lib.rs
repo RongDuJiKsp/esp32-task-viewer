@@ -1,9 +1,9 @@
+use anyhow::Result;
+use core::time::Duration;
+use embedded_graphics::{draw_target::DrawTarget, pixelcolor::BinaryColor, prelude::Point, Pixel};
 use esp32_st7305_driver::{
     DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH,
 };
-use anyhow::Result;
-use core::{result::Result::Ok, time::Duration};
-use embedded_graphics::{draw_target::DrawTarget, pixelcolor::BinaryColor, prelude::Point, Pixel};
 use slint::{
     platform::{
         software_renderer::{
@@ -13,7 +13,6 @@ use slint::{
     },
     PhysicalSize, PlatformError, Rgb8Pixel,
 };
-
 use std::{
     rc::Rc,
     sync::{Arc, Mutex, MutexGuard},
@@ -63,10 +62,8 @@ impl SlintSt7305Platform {
     }
     pub fn event_loop_wait(&self) -> EventLoopResult {
         if self.window.has_active_animations() {
-            // If there are active animations, we should aim for a higher frame rate, so we wait for a shorter duration.
             esp_idf_hal::delay::FreeRtos::delay_ms(16);
         } else {
-            // If there are no active animations, we can afford to wait longer, which can save power.
             esp_idf_hal::delay::FreeRtos::delay_ms(200);
         }
         Ok(())
