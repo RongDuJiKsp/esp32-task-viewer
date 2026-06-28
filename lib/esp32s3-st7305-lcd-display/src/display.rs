@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use anyhow::Result;
 use display_interface_spi::SPIInterface;
 use esp_idf_hal::{
-    gpio::{AnyIOPin, PinDriver,Output},
+    gpio::{AnyIOPin, Output, PinDriver},
     spi::{SpiConfig, SpiDeviceDriver, SpiDriver, SpiDriverConfig},
 };
 use st7305::{BinaryColor, Orientation, St7305};

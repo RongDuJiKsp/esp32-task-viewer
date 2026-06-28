@@ -19,9 +19,7 @@ pub struct BatteryMonitor {
 
 impl std::fmt::Debug for BatteryMonitor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("BatteryMonitor")
-            .field("adc", &self.adc)
-            .finish_non_exhaustive()
+        f.debug_struct("BatteryMonitor").field("adc", &self.adc).finish_non_exhaustive()
     }
 }
 
