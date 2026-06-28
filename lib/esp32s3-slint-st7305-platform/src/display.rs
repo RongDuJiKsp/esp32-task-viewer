@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use anyhow::Result;
-use embedded_graphics::{draw_target::DrawTarget, pixelcolor::BinaryColor, prelude::Point, Pixel};
+use embedded_graphics::{draw_target::DrawTarget, prelude::Point, Pixel};
 use esp32s3_st7305_lcd_display::{DisplayRaw, ESP32S3_LCP4_2_SCREEN_WIDTH};
 use slint::{
     platform::software_renderer::{LineBufferProvider, Rgb565Pixel},
@@ -30,9 +30,7 @@ impl SlintSt7305PlatformDisplay {
     pub fn get_buffer(
         &self,
     ) -> Result<MutexGuard<'_, [Rgb565Pixel; ESP32S3_LCP4_2_SCREEN_WIDTH as usize]>> {
-        self.line_buffer
-            .lock()
-            .map_err(|e| anyhow::anyhow!("Failed to lock line buffer: {:#?}", e))
+        self.line_buffer.lock().map_err(|e| anyhow::anyhow!("Failed to lock line buffer: {:#?}", e))
     }
 }
 

@@ -1,5 +1,7 @@
-use anyhow::Result;
 use core::{result::Result::Ok, time::Duration};
+use std::{panic::PanicHookInfo, sync::Arc, thread::sleep};
+
+use anyhow::Result;
 use embedded_graphics::{
     mono_font::{ascii::FONT_10X20, MonoTextStyle},
     pixelcolor::BinaryColor,
@@ -7,14 +9,10 @@ use embedded_graphics::{
     primitives::Rectangle,
 };
 use embedded_text::{alignment::HorizontalAlignment, style::TextBoxStyleBuilder, TextBox};
-
-use esp_idf_hal::gpio::PinDriver;
-use std::{panic::PanicHookInfo, thread::sleep};
-
 use esp32s3_st7305_lcd_display::{
     DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH,
 };
-use std::sync::Arc;
+use esp_idf_hal::gpio::PinDriver;
 
 pub struct PanicHandlerIO<'a> {
     boot_btn: PinDriver<'a, esp_idf_hal::gpio::Input>,
@@ -58,20 +56,20 @@ impl<'a> PanicHandlerInner<'a> {
     fn new(io: PanicHandlerIO<'a>, display: Arc<DisplayRaw>) -> Self {
         PanicHandlerInner { io, display }
     }
+
     fn try_handle_panic(&self, info: &PanicHookInfo) -> Result<()> {
         log::error!("Panic occurred: {}", info);
         self.print_panic_info_to_lcd(info)?;
         self.wait_boot_press()?;
         Ok(())
     }
+
     fn print_panic_info_to_lcd(&self, info: &PanicHookInfo) -> Result<()> {
         let mut screen = self.display.get_display()?;
 
         let text = format!("SYSTEM PANIC !!!\n\n{}", info);
         let character_style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
-        let textbox_style = TextBoxStyleBuilder::new()
-            .alignment(HorizontalAlignment::Left)
-            .build();
+        let textbox_style = TextBoxStyleBuilder::new().alignment(HorizontalAlignment::Left).build();
         let margin = 10u32;
         let area = Rectangle::new(
             Point::new(margin as i32, margin as i32),
@@ -83,12 +81,11 @@ impl<'a> PanicHandlerInner<'a> {
         TextBox::with_textbox_style(&text, area, character_style, textbox_style)
             .draw(&mut (*screen))?;
 
-        screen
-            .flush()
-            .map_err(|e| anyhow::anyhow!("Failed to flush display: {:#?}", e))?;
+        screen.flush().map_err(|e| anyhow::anyhow!("Failed to flush display: {:#?}", e))?;
 
         Ok(())
     }
+
     fn wait_boot_press(&self) -> Result<()> {
         log::info!("Press the BOOT button to continue...");
         loop {

@@ -1,13 +1,16 @@
 use core::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
-use std::{panic, sync::OnceLock};
+use std::{
+    panic,
+    sync::{Arc, OnceLock},
+};
 
-use crate::esp32_sys::panic_handler::{PanicHandler, PanicHandlerIO};
 use esp32s3_st7305_lcd_display::{DisplayIO, DisplayRaw};
 use esp_idf_hal::{
     gpio::{PinDriver, Pull},
     peripherals::Peripherals,
 };
+
+use crate::esp32_sys::panic_handler::{PanicHandler, PanicHandlerIO};
 
 static INIT_FLAG: AtomicBool = AtomicBool::new(false);
 static GLOBAL_DISPLAY: OnceLock<Arc<DisplayRaw>> = OnceLock::new();
@@ -22,12 +25,15 @@ impl SysInit {
         Self::init_pins();
         INIT_FLAG.store(true, Ordering::Relaxed);
     }
+
     fn init_patches() {
         esp_idf_svc::sys::link_patches();
     }
+
     fn init_logger() {
         esp_idf_svc::log::EspLogger::initialize_default();
     }
+
     fn init_pins() {
         log::info!("Initializing peripherals...");
         let peripherals = Peripherals::take().expect("Failed to take peripherals");
@@ -61,9 +67,6 @@ impl SysInit {
 pub struct SysStore;
 impl SysStore {
     pub fn get_display() -> Arc<DisplayRaw> {
-        GLOBAL_DISPLAY
-            .get()
-            .expect("Display not initialized")
-            .clone()
+        GLOBAL_DISPLAY.get().expect("Display not initialized").clone()
     }
 }

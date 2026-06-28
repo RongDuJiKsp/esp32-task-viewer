@@ -46,16 +46,12 @@ impl DisplayRaw {
             .map_err(|e| anyhow::anyhow!("Failed to initialize display: {:#?}", e))?;
         display.set_orientation(Orientation::Landscape);
         display.color_clear(BinaryColor::Off as u8);
-        display
-            .flush()
-            .map_err(|e| anyhow::anyhow!("Failed to flush display: {:#?}", e))?;
+        display.flush().map_err(|e| anyhow::anyhow!("Failed to flush display: {:#?}", e))?;
         Ok(())
     }
 
     pub fn get_display(&self) -> Result<std::sync::MutexGuard<'_, St7305Display<'static>>> {
-        self.display
-            .lock()
-            .map_err(|e| anyhow::anyhow!("Failed to lock display: {:#?}", e))
+        self.display.lock().map_err(|e| anyhow::anyhow!("Failed to lock display: {:#?}", e))
     }
 }
 

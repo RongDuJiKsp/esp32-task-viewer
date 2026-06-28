@@ -3,6 +3,9 @@ name = "esp32s3-slint-st7305-platform"
 version = "0.1.0"
 edition = "2021"
 
+[lints]
+workspace = true
+
 [dependencies]
 log = "0.4"
 esp32s3-st7305-lcd-display = { version = "0.1.0", path = "../esp32s3-st7305-lcd-display" }

@@ -1,13 +1,14 @@
 use core::time::Duration;
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 
 use anyhow::Result;
-use esp32s3_st7305_lcd_display::{DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH};
+use esp32s3_st7305_lcd_display::{
+    DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH,
+};
 use slint::{
     platform::{software_renderer::MinimalSoftwareWindow, Platform, WindowAdapter},
     PhysicalSize, PlatformError,
 };
-use std::sync::Arc;
 
 use crate::display::SlintSt7305PlatformDisplay;
 
@@ -20,15 +21,12 @@ type EventLoopResult = Result<(), PlatformError>;
 
 impl SlintSt7305Platform {
     pub fn new(display: Arc<DisplayRaw>) -> Self {
-        let window = MinimalSoftwareWindow::new(slint::platform::software_renderer::RepaintBufferType::ReusedBuffer);
-        window.set_size(PhysicalSize::new(
-            ESP32S3_LCP4_2_SCREEN_WIDTH,
-            ESP32S3_LCP4_2_SCREEN_HEIGHT,
-        ));
-        Self {
-            window,
-            platform_display: SlintSt7305PlatformDisplay::new(display),
-        }
+        let window = MinimalSoftwareWindow::new(
+            slint::platform::software_renderer::RepaintBufferType::ReusedBuffer,
+        );
+        window
+            .set_size(PhysicalSize::new(ESP32S3_LCP4_2_SCREEN_WIDTH, ESP32S3_LCP4_2_SCREEN_HEIGHT));
+        Self { window, platform_display: SlintSt7305PlatformDisplay::new(display) }
     }
 
     pub fn event_loop_timer(&self) -> EventLoopResult {
