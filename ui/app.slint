@@ -1,98 +1,191 @@
 import { Waveshare-ESP32-S3-RLCD-4-2 } from "constants.slint";
+
 export component App inherits Window {
     width: Waveshare-ESP32-S3-RLCD-4-2.screenWidth;
     height: Waveshare-ESP32-S3-RLCD-4-2.screenHeight;
 
-    in property <string> current-time: "--:--";
+    in property <string> current-hour: "--";
+    in property <string> current-minute: "--";
     in property <string> current-second: "--";
-    in property <string> current-date: "2000-01-01 Mon";
+    in property <string> current-date: "2000-01-01";
+    in property <string> current-weekday: "Monday";
     in property <int> battery: 100;
+    in property <string> voltage: "0.0V";
+    in property <string> mcu-signal: "ESP32-S3";
+
     background: white;
+
+    property <bool> colon-visible: true;
+
     Rectangle {
         width: parent.width;
         height: parent.height;
-        background: white; 
-        // ===== 顶栏 =====
-         Text {
-            x: 16px;
-            y: 12px;
-            text: current-date;
-            color: black;
-            font-size: 14px;
-        }
+        background: white;
 
-        // ===== 电池状态 =====
-        Rectangle {
-            private property <int> battery-len:50;
-            border-width: 2px;
-            x: parent.width - 76px;
-            y: 12px;
-            width: battery-len * 1px + 4px;
-            height: 20px;
-            border-color: black;
-            background: white;
+        VerticalLayout {
+            width: 100%;
+            height: 100%;
+
+            // ==================== 顶栏 ====================
             Rectangle {
-                x: parent.border-width;
-                y: parent.border-width;
-                width: (battery * parent.battery-len / 100) * 1px;
-                height: parent.height - 2 * parent.border-width;
+                height: 48px;
+                background: white;
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-top: 12px;
+                padding-bottom: 12px;
+
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 8px;
+
+                    // 左侧占位，把内容推到右边
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+
+                    Text {
+                        text: voltage;
+                        color: black;
+                        font-size: 14px;
+                    }
+
+                    Text {
+                        text: battery + "%";
+                        color: black;
+                        font-size: 14px;
+                    }
+
+                    Rectangle {
+                        width: 54px;
+                        height: 20px;
+                        border-width: 2px;
+                        border-color: black;
+                        background: white;
+
+                        Rectangle {
+                            x: 2px;
+                            y: 2px;
+                            width: (battery * 50 / 100) * 1px;
+                            height: 16px;
+                            background: black;
+                        }
+                    }
+                }
+            }
+
+            // ==================== 分隔线 1 ====================
+            Rectangle {
+                height: 2px;
                 background: black;
             }
-        }
 
-        Text {
-            x: parent.width - 130px;
-            y: 14px;
-            text: battery + "%";
-            color: black;
-            font-size: 14px;
-        } 
-        // ===== 分隔线 ===== 
-        Rectangle {
-            x: 16px;
-            y: 44px;
-            width: parent.width - 32px;
-            height: 2px;
-            background: black;
-        } 
-        // ===== 时间 ===== 
-        Text {
-            horizontal-alignment: center;
-            x: 0px;
-            y: 90px;
-            width: parent.width;
-            text: current-time;
-            color: black;
-            font-size: 88px;
-            font-weight: 700;
-        }
+            // ==================== 中间区域 ====================
+            VerticalLayout {
+                vertical-stretch: 1;
+                alignment: center;
 
-        Text {
-            horizontal-alignment: center;
-            x: 0px;
-            y: 180px;
-            width: parent.width;
-            text: current-second;
-            color: black;
-            font-size: 32px;
-        } 
-        // ===== 底部状态 ===== 
-        Rectangle {
-            x: 40px;
-            y: 255px;
-            width: parent.width - 80px;
-            height: 2px;
-            background: black;
-        }
+                // 上方弹簧
+                Rectangle {
+                    height: 0px;
+                    vertical-stretch: 1;
+                }
 
-        Text {
-            x: 0px;
-            y: 268px;
-            width: parent.width;
-            horizontal-alignment: center;
-            text: "ESP32-S3 CLOCK";
-            color: black;
-            font-size: 14px;
+                Text {
+                    width: 100%;
+                    horizontal-alignment: center;
+                    text: current-date;
+                    color: black;
+                    font-size: 18px;
+                }
+
+                Text {
+                    width: 100%;
+                    horizontal-alignment: center;
+                    text: current-weekday;
+                    color: black;
+                    font-size: 18px;
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 0px;
+
+                    Text {
+                        text: current-hour;
+                        color: black;
+                        font-size: 88px;
+                        font-weight: 700;
+                    }
+
+                    Text {
+                        text: ":";
+                        color: black;
+                        font-size: 88px;
+                        font-weight: 700;
+                        opacity: colon-visible ? 1.0 : 0.0;
+                    }
+
+                    Text {
+                        text: current-minute;
+                        color: black;
+                        font-size: 88px;
+                        font-weight: 700;
+                    }
+                }
+
+                Text {
+                    width: 100%;
+                    horizontal-alignment: center;
+                    text: current-second;
+                    color: #444444;
+                    font-size: 32px;
+                }
+
+                // 下方弹簧
+                Rectangle {
+                    height: 0px;
+                    vertical-stretch: 1;
+                }
+            }
+
+            // ==================== 分隔线 2 ====================
+            Rectangle {
+                height: 2px;
+                background: black;
+            }
+
+            // ==================== 底部区域 ====================
+            VerticalLayout {
+                height: 52px;
+                alignment: center;
+
+                Rectangle {
+                    height: 0px;
+                    vertical-stretch: 1;
+                }
+
+                Text {
+                    width: 100%;
+                    horizontal-alignment: center;
+                    text: mcu-signal;
+                    color: black;
+                    font-size: 14px;
+                }
+
+                Rectangle {
+                    height: 0px;
+                    vertical-stretch: 1;
+                }
+            }
+        }
+    }
+
+    Timer {
+        interval: 500ms;
+        running: true;
+        triggered => {
+            colon-visible = !colon-visible;
         }
     }
 }
