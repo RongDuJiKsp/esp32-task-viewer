@@ -58,6 +58,7 @@ embedded-text = "0.7.3"
 chrono = "0.4.45"
 esp32s3-st7305-lcd-display = { path = "lib/esp32s3-st7305-lcd-display" }
 esp32s3-slint-st7305-platform = { path = "lib/esp32s3-slint-st7305-platform" }
+esp32s3-battery-monitor = { path = "lib/esp32s3-battery-monitor" }
 
 [build-dependencies]
 embuild = "0.33"

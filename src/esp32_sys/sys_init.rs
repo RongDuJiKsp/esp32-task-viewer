@@ -4,6 +4,7 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
+use esp32s3_battery_monitor::{BatteryChemistry, BatteryIO, BatteryMonitor};
 use esp32s3_st7305_lcd_display::{DisplayIO, DisplayRaw};
 use esp_idf_hal::{
     gpio::{PinDriver, Pull},
@@ -14,6 +15,7 @@ use crate::esp32_sys::panic_handler::{PanicHandler, PanicHandlerIO};
 
 static INIT_FLAG: AtomicBool = AtomicBool::new(false);
 static GLOBAL_DISPLAY: OnceLock<Arc<DisplayRaw>> = OnceLock::new();
+static GLOBAL_BATTERY: OnceLock<Arc<BatteryMonitor>> = OnceLock::new();
 pub struct SysInit;
 impl SysInit {
     pub fn init_sys() {
@@ -61,6 +63,15 @@ impl SysInit {
         }));
 
         GLOBAL_DISPLAY.set(display).unwrap();
+
+        let battery_pin = BatteryIO {
+            adc: peripherals.adc1,
+            battery_pin: peripherals.pins.gpio4,
+        };
+        log::info!("Initializing battery monitor...");
+        let battery = Arc::new(BatteryMonitor::new(battery_pin, BatteryChemistry::LiIon).unwrap());
+        log::info!("Battery monitor initialized successfully");
+        GLOBAL_BATTERY.set(battery).unwrap();
     }
 }
 
@@ -68,5 +79,9 @@ pub struct SysStore;
 impl SysStore {
     pub fn get_display() -> Arc<DisplayRaw> {
         GLOBAL_DISPLAY.get().expect("Display not initialized").clone()
+    }
+
+    pub fn get_battery() -> Arc<BatteryMonitor> {
+        GLOBAL_BATTERY.get().expect("Battery not initialized").clone()
     }
 }
