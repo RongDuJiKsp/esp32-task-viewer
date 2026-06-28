@@ -64,10 +64,7 @@ impl SysInit {
 
         GLOBAL_DISPLAY.set(display).unwrap();
 
-        let battery_pin = BatteryIO {
-            adc: peripherals.adc1,
-            battery_pin: peripherals.pins.gpio4,
-        };
+        let battery_pin = BatteryIO { adc: peripherals.adc1, battery_pin: peripherals.pins.gpio4 };
         log::info!("Initializing battery monitor...");
         let battery = Arc::new(BatteryMonitor::new(battery_pin, BatteryChemistry::LiIon).unwrap());
         log::info!("Battery monitor initialized successfully");

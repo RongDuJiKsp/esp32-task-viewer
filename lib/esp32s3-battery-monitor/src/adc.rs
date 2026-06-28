@@ -5,13 +5,19 @@ use esp_idf_hal::adc::{
         config::{AdcChannelConfig, Calibration},
         AdcChannelDriver, AdcDriver,
     },
-    Resolution, ADCU1, ADCCH3,
+    Resolution, ADCCH3, ADCU1,
 };
 
 use crate::BatteryIO;
 
 pub struct Adc<'a> {
     channel: AdcChannelDriver<'a, ADCCH3<ADCU1>, AdcDriver<'a, ADCU1>>,
+}
+
+impl std::fmt::Debug for Adc<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Adc").finish_non_exhaustive()
+    }
 }
 
 impl<'a> Adc<'a> {

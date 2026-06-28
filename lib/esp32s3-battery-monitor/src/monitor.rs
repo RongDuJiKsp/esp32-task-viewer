@@ -6,15 +6,23 @@ use battery_estimator::{BatteryChemistry, SocEstimator};
 use crate::{adc::Adc, BatteryIO};
 
 /// 电压分压比：实际电池电压 = ADC读取电压 × VOLTAGE_DIVIDER_RATIO
-const VOLTAGE_DIVIDER_RATIO: f64 = 3.0;
+const VOLTAGE_DIVIDER_RATIO: f32 = 3.0;
 /// ADC 参考电压 (mV)，Atten11dB 对应 ~3100mV
-const ADC_REF_MV: f64 = 3100.0;
+const ADC_REF_MV: f32 = 3100.0;
 /// ESP32-S3 ADC 分辨率 (12-bit)
-const ADC_MAX_RAW: f64 = 4095.0;
+const ADC_MAX_RAW: f32 = 4095.0;
 
 pub struct BatteryMonitor {
     adc: Mutex<Adc<'static>>,
     estimator: SocEstimator,
+}
+
+impl std::fmt::Debug for BatteryMonitor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BatteryMonitor")
+            .field("adc", &self.adc)
+            .finish_non_exhaustive()
+    }
 }
 
 impl BatteryMonitor {
@@ -32,25 +40,22 @@ impl BatteryMonitor {
 
     /// 读取电池电压 (mV)
     pub fn read_voltage_mv(&self) -> Result<u32> {
-        let raw = self.read_raw()? as f64;
+        let raw = self.read_raw()? as f32;
         let adc_mv = raw * ADC_REF_MV / ADC_MAX_RAW;
         let battery_mv = adc_mv * VOLTAGE_DIVIDER_RATIO;
         Ok(battery_mv as u32)
     }
 
     /// 读取电池电压 (V)
-    pub fn read_voltage_v(&self) -> Result<f64> {
+    pub fn read_voltage_v(&self) -> Result<f32> {
         let mv = self.read_voltage_mv()?;
-        Ok(mv as f64 / 1000.0)
+        Ok(mv as f32 / 1000.0)
     }
 
     /// 读取电池电量百分比 (0-100)
     pub fn read_soc(&self) -> Result<u8> {
         let voltage = self.read_voltage_v()?;
-        let soc = self
-            .estimator
-            .estimate_soc(voltage)
-            .map_err(|e| anyhow::anyhow!("{e}"))?;
+        let soc = self.estimator.estimate_soc(voltage).map_err(|e| anyhow::anyhow!("{e}"))?;
         Ok(soc as u8)
     }
 }
