@@ -6,14 +6,17 @@ use esp_idf_hal::{
     gpio::{AnyIOPin, PinDriver},
     spi::{SpiConfig, SpiDeviceDriver, SpiDriver, SpiDriverConfig},
 };
-use st7305::{BinaryColor, Orientation, St7305};
 use std::sync::Mutex;
+use st7305::{BinaryColor, Orientation, St7305};
+
 pub type St7305Display<'a> = St7305<
     SPIInterface<SpiDeviceDriver<'a, SpiDriver<'a>>, PinDriver<'a, esp_idf_hal::gpio::Output>>,
     PinDriver<'a, esp_idf_hal::gpio::Output>,
 >;
+
 pub const ESP32S3_LCP4_2_SCREEN_WIDTH: u32 = 400;
 pub const ESP32S3_LCP4_2_SCREEN_HEIGHT: u32 = 300;
+
 /*
 连接关系：
 ESP32-S3                 ST7305
@@ -32,9 +35,11 @@ pub struct DisplayIO<'a> {
     pub dc: esp_idf_hal::gpio::Gpio5<'a>,
     pub rst: esp_idf_hal::gpio::Gpio41<'a>,
 }
+
 pub struct DisplayRaw {
     display: Mutex<St7305Display<'static>>,
 }
+
 impl DisplayRaw {
     pub fn new(io: DisplayIO<'static>) -> Result<Self> {
         let spi = SpiDriver::new(

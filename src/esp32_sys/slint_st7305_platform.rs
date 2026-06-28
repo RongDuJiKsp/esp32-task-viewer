@@ -1,4 +1,4 @@
-use super::lib::display_raw::{
+use esp32_st7305_driver::{
     DisplayRaw, ESP32S3_LCP4_2_SCREEN_HEIGHT, ESP32S3_LCP4_2_SCREEN_WIDTH,
 };
 use anyhow::Result;

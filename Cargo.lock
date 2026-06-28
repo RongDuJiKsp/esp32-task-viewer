@@ -1524,25 +1524,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "esp32-st7305-driver"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "display-interface",
+ "display-interface-spi",
+ "esp-idf-hal",
+ "log",
+ "st7305",
+]
+
+[[package]]
 name = "esp32-task-viewer"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "display-interface",
- "display-interface-spi",
  "embassy-time",
  "embedded-graphics",
- "embedded-hal 1.0.0",
  "embedded-text",
  "embuild",
  "esp-idf-hal",
  "esp-idf-svc",
  "esp-idf-sys",
+ "esp32-st7305-driver",
  "log",
  "slint",
  "slint-build",
- "st7305",
 ]
 
 [[package]]
