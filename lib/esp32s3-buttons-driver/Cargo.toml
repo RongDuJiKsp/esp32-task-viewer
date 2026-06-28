@@ -3,6 +3,8 @@ name = "esp32s3-buttons-driver"
 version = "0.1.0"
 edition = "2021"
 resolver = "2"
+description = "Buttons driver for ESP32-S3"
+license = "MIT"
 
 [lints]
 workspace = true
