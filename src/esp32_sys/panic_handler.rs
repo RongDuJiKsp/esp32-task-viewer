@@ -1,5 +1,4 @@
-use core::{result::Result::Ok, time::Duration};
-use std::{panic::PanicHookInfo, sync::Arc, thread::sleep};
+use std::{panic::PanicHookInfo, sync::Arc};
 
 use anyhow::Result;
 use embedded_graphics::{
@@ -32,7 +31,7 @@ struct PanicHandlerInner<'a> {
 }
 // wrap
 impl<'a> PanicHandler<'a> {
-    pub fn handle_panic(&self, info: &PanicHookInfo) {
+    pub fn handle_panic(&self, info: &PanicHookInfo<'_>) {
         if let Err(err) = self.inner.try_handle_panic(info) {
             log::error!("Failed to handle panic: {err:#}");
         }
@@ -46,7 +45,7 @@ impl<'a> PanicHandler<'a> {
 
     fn wait_forever() -> ! {
         loop {
-            sleep(Duration::from_secs(5));
+            core::hint::spin_loop();
         }
     }
 }
@@ -91,11 +90,14 @@ impl<'a> PanicHandlerInner<'a> {
         loop {
             if self.io.boot_btn.is_low() {
                 log::info!("BOOT button pressed. Restarting...");
+                // SAFETY: esp_restart() performs a full chip reset.
+                // Called only in panic context after displaying panic info to LCD,
+                // as a final recovery mechanism triggered by user interaction.
                 unsafe {
                     esp_idf_sys::esp_restart();
                 }
             }
-            sleep(Duration::from_secs(3));
+            esp_idf_hal::delay::FreeRtos::delay_ms(3000);
         }
     }
 }
