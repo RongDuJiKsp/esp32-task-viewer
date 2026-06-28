@@ -4751,7 +4751,8 @@ dependencies = [
 [[package]]
 name = "st7305"
 version = "0.1.2"
-source = "git+https://github.com/RongDuJiKsp/st7305#9e928f8a7c640ba3f48c116460cb36494607e56f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "288032fdba55b94484faf1b101c282eb2d91c8cf499ba87006e67991ce0aa4bb"
 dependencies = [
  "display-interface",
  "embedded-graphics-core",
