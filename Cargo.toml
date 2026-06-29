@@ -28,7 +28,7 @@ used_underscore_binding = "allow"
 
 [package]
 name = "esp32-task-viewer"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["yuqizhou <rdjksp@gmail.com>"]
 edition = "2021"
 rust-version = "1.82"

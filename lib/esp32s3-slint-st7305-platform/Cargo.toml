@@ -1,16 +1,18 @@
 [package]
 name = "esp32s3-slint-st7305-platform"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Slint platform backend for ST7305 display on ESP32-S3"
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/RongDuJiKsp/esp32-task-viewer"
 
 [lints]
 workspace = true
 
 [dependencies]
 log = "0.4"
-esp32s3-st7305-lcd-display = { version = "0.1.0", path = "../esp32s3-st7305-lcd-display" }
+esp32s3-st7305-lcd-display = { version = "0.1.1", path = "../esp32s3-st7305-lcd-display" }
 esp-idf-hal = "0.46.2"
 anyhow = "1.0.102"
 embedded-graphics = "0.8.2"
