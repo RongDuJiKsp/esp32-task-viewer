@@ -1,3 +1,21 @@
-/.vscode
-/.embuild
-/target
+# IDE
+.vscode
+.idea
+
+# Node.js
+node_modules
+
+# 系统文件
+.DS_Store
+*.swp
+*.swo
+
+# 日志
+*.log
+
+# Rust 通用
+target/
+
+# 构建产物
+dist
+dist-ssr

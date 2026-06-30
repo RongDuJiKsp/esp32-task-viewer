@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["lib/*", "."]
+members = ["lib/*"]
 
 [workspace.dependencies]
 esp32s3-buttons-driver = { path = "lib/esp32s3-buttons-driver" }
@@ -27,7 +27,7 @@ todo = "warn"
 used_underscore_binding = "allow"
 
 [package]
-name = "esp32-task-viewer"
+name = "esp-rom"
 version = "0.1.1"
 authors = ["yuqizhou <rdjksp@gmail.com>"]
 edition = "2021"
@@ -37,7 +37,7 @@ rust-version = "1.82"
 workspace = true
 
 [[bin]]
-name = "esp32-task-viewer"
+name = "esp-rom"
 harness = false # do not use the built-in cargo test harness -> resolve rust-analyzer errors
 
 [profile.release]

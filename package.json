@@ -1,0 +1,21 @@
+{
+  "name": "esp32-task-viewer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ESP32 Task Viewer - Monorepo",
+  "scripts": {
+    "dev:desktop": "pnpm --filter esp-desktop dev",
+    "build:desktop": "pnpm --filter esp-desktop build",
+    "tauri:dev": "pnpm --filter esp-desktop tauri dev",
+    "tauri:build": "pnpm --filter esp-desktop tauri build",
+    "rom:build": "pnpm --filter esp-rom build",
+    "rom:flash": "pnpm --filter esp-rom flash",
+    "rom:fmt": "pnpm --filter esp-rom fmt",
+    "rom:clippy": "pnpm --filter esp-rom clippy",
+    "rom:clean": "pnpm --filter esp-rom clean"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=9"
+  }
+}
