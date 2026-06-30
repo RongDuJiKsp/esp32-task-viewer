@@ -1534,8 +1534,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "esp32-task-viewer"
-version = "0.1.0"
+name = "esp-rom"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1557,7 +1557,7 @@ dependencies = [
 
 [[package]]
 name = "esp32s3-battery-monitor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "battery-estimator",
@@ -1567,7 +1567,7 @@ dependencies = [
 
 [[package]]
 name = "esp32s3-buttons-driver"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "esp-idf-hal",
@@ -1576,7 +1576,7 @@ dependencies = [
 
 [[package]]
 name = "esp32s3-slint-st7305-platform"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "embedded-graphics",
@@ -1588,7 +1588,7 @@ dependencies = [
 
 [[package]]
 name = "esp32s3-st7305-lcd-display"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "display-interface",
