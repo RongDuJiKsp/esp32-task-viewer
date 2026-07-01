@@ -7,22 +7,4 @@
     "rust-analyzer.cargo.buildScripts.enable": true,
     "rust-analyzer.procMacro.enable": true,
     "rust-analyzer.cargo.sysroot": "discover",
-    // 关键：指定 esp toolchain 的 sysroot src 路径
-    // 通过命令获取: rustup run esp rustc --print sysroot
-    // 然后拼接 /lib/rustlib/src/rust/library
-    "rust-analyzer.cargo.sysrootSrc": "${userHome}/.rustup/toolchains/esp/lib/rustlib/src/rust/library",
-    // ESP-IDF 需要的环境变量
-    "rust-analyzer.cargo.extraEnv": {
-        "MCU": "esp32s3",
-        "ESP_IDF_VERSION": "v5.5.3",
-        "ESP_IDF_TOOLS_INSTALL_DIR": "workspace"
-    },
-    "rust-analyzer.check.allTargets": false,
-    // 指定 cargo check 的 target，避免 RA 用 host target 去 check
-    "rust-analyzer.check.extraArgs": [
-        "--target",
-        "xtensa-esp32s3-espidf"
-    ],
-    // 指定 target 让 RA 正确解析条件编译
-    "rust-analyzer.cargo.target": "xtensa-esp32s3-espidf"
 }
